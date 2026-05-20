@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 폰트 설정 (구글 폰트 불러오기) */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;900&family=Roboto+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@400;700;800&display=swap');
+
+/* 커스텀 스타일 */
+body {
+  background-color: #000;
+  color: #fff;
+  font-family: 'Roboto Mono', monospace; /* 기본 폰트 설정 */
+}
+
+/* 스크롤바 커스텀 */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 14px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #e0e0e0;
+    border-left: 1px solid #999;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border: 2px solid #e0e0e0;
+    box-shadow: inset 1px 1px 0 rgba(255,255,255,0.5), inset -1px -1px 0 rgba(0,0,0,0.5);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a0a0a0;
+}
+
+/* --- CRT 효과 정의 --- */
+
+/* 1. 화면 깜빡임 애니메이션 */
+@keyframes flicker {
+  0% { opacity: 0.98; }
+  5% { opacity: 0.95; }
+  10% { opacity: 0.9; }
+  15% { opacity: 0.95; }
+  20% { opacity: 0.99; }
+  25% { opacity: 0.95; }
+  30% { opacity: 0.9; }
+  35% { opacity: 0.96; }
+  40% { opacity: 0.98; }
+  45% { opacity: 0.95; }
+  50% { opacity: 0.99; }
+  55% { opacity: 0.93; }
+  60% { opacity: 0.9; }
+  65% { opacity: 0.96; }
+  70% { opacity: 1; }
+  75% { opacity: 0.97; }
+  80% { opacity: 0.95; }
+  85% { opacity: 0.92; }
+  90% { opacity: 0.97; }
+  95% { opacity: 0.99; }
+  100% { opacity: 0.94; }
+}
+
+/* 2. 스캔라인 이동 애니메이션 (선택사항: 정적으로 두고 싶으면 제거 가능) */
+@keyframes scanline-move {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+/* 3. CRT 오버레이 클래스 */
+.crt-overlay {
+  /* 클릭 이벤트를 통과시켜서 아래 버튼들이 눌리게 함 */
+  pointer-events: none; 
+  position: fixed;
+  inset: 0;
+  z-index: 9999; /* 모든 요소보다 위에 위치 */
+  
+  /* 스캔라인 패턴: 2px 간격의 가로줄 */
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.07) 50%,
+    rgba(0, 0, 0, 0.07)
+  );
+  background-size: 100% 3px;  /* 줄 간격 조절 */
+  
+  /* 화면 전체 깜빡임 효과 적용 */
+  animation: flicker 3s infinite, scanline-move 500s linear infinite;
+}
+
+/* 4. 비네팅 효과 (모서리 어둡게) */
+/*
+.crt-overlay::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: radial-gradient(
+    circle, 
+    rgba(18, 16, 16, 0) 60%, 
+    rgba(0, 0, 0, 0.4) 100%
+  );
+}
+*/
+
+/* 5. 텍스트 번짐 효과 (선택사항) */
+.text-glow {
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.3);
+}

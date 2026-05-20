@@ -1,0 +1,368 @@
+/* ============================================= */
+/* 0. 글로벌 및 기본 설정 */
+/* ============================================= */
+:root {
+    --color-bg: #EAEAEA;
+    --color-surface: #FFFFFF;
+    --color-text: #333333;
+    --color-border: #BBBBBB;
+    --color-blue: #004A99;
+    --color-yellow: #F0AD4E;
+    --color-red: #D9534F;
+    --font-main: 'Noto Sans KR', sans-serif;
+    --font-mono: 'Courier New', monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+h1, h2, h3 {
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--color-blue);
+}
+
+a {
+    color: var(--color-blue);
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.monospace {
+    font-family: var(--font-mono);
+    background-color: #f4f4f4;
+    padding: 2px 4px;
+    border: 1px solid #ddd;
+    font-size: 0.95em;
+}
+
+.redacted {
+    color: var(--color-text);
+    background-color: var(--color-text);
+    user-select: none;
+    padding: 0 4px;
+}
+
+/* ============================================= */
+/* 1. 진입 페이지 (Splash Screen) */
+/* ============================================= */
+#splash-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #333;
+}
+
+.login-box {
+    width: 600px;
+    padding: 30px;
+    background-color: var(--color-surface);
+    border: 2px solid var(--color-border);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.bphc-logo {
+    font-family: var(--font-mono);
+    font-size: 2.5em;
+    color: #000;
+    border: 3px double #000;
+    padding: 10px;
+    display: inline-block;
+}
+
+.warning-text {
+    border: 2px solid var(--color-red);
+    background-color: #fff8f8;
+    padding: 15px;
+    margin: 20px 0;
+    text-align: left;
+    color: #555;
+}
+.warning-text strong {
+    color: var(--color-red);
+}
+
+#loading-status {
+    font-family: var(--font-mono);
+    color: #555;
+    margin: 20px 0;
+}
+
+#login-button {
+    font-family: var(--font-main);
+    font-size: 1.2em;
+    font-weight: 700;
+    padding: 10px 30px;
+    background-color: var(--color-blue);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+#login-button:hover {
+    background-color: #003366;
+}
+
+/* ============================================= */
+/* 2. 메인 사이트 */
+/* ============================================= */
+#main-app {
+    width: 100%;
+    max-width: 1200px;
+    margin: 15px auto;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: #f9f9f9;
+    border-bottom: 2px solid var(--color-blue);
+    font-size: 0.9em;
+}
+
+.bphc-logo-small {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--color-blue);
+    margin-right: 10px;
+}
+
+.header-right {
+    color: #666;
+}
+.header-right a {
+    color: var(--color-red);
+}
+
+.app-container {
+    display: flex;
+    min-height: 80vh;
+}
+
+/* ============================================= */
+/* 3. 내비게이션 (GNB) */
+/* ============================================= */
+nav {
+    width: 220px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--color-border);
+    padding: 20px;
+    background-color: #fdfdfd;
+}
+
+nav h3 {
+    font-size: 1.1em;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+}
+
+nav ul {
+    list-style: none;
+    margin-top: 15px;
+}
+nav ul li {
+    margin-bottom: 5px;
+}
+nav ul li a {
+    display: block;
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.95em;
+    color: #444;
+}
+nav ul li a:hover {
+    background-color: #f0f0f0;
+    text-decoration: none;
+}
+nav ul li a.active {
+    background-color: var(--color-blue);
+    color: white;
+}
+
+.project-link {
+    margin-top: 20px;
+    border-top: 1px dashed var(--color-border);
+    padding-top: 15px;
+}
+.project-link a {
+    background-color: var(--color-yellow);
+    color: #333;
+}
+.project-link a:hover {
+    background-color: #e69d2e;
+}
+
+/* ============================================= */
+/* 4. 메인 콘텐츠 */
+/* ============================================= */
+main {
+    flex-grow: 1;
+    padding: 25px;
+    overflow-y: auto;
+}
+
+.page-content h2 {
+    font-size: 1.8em;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.widget {
+    border: 1px solid var(--color-border);
+    margin-bottom: 20px;
+}
+.widget h3 {
+    font-size: 1.2em;
+    padding: 12px 15px;
+    background-color: #f7f7f7;
+    border-bottom: 1px solid var(--color-border);
+    color: #333;
+}
+.widget p, .widget ul {
+    padding: 15px;
+}
+
+.widget.warning { border-color: var(--color-yellow); }
+.widget.warning h3 { background-color: #fcf8e3; border-color: var(--color-yellow); color: #8a6d3b; }
+.widget.danger { border-color: var(--color-red); }
+.widget.danger h3 { background-color: #f2dede; border-color: var(--color-red); color: #a94442; }
+.widget.note { border-color: #bce8f1; }
+.widget.note h3 { background-color: #d9edf7; border-color: #bce8f1; color: #31708f; }
+
+.log-list {
+    list-style: none;
+}
+.log-list li {
+    font-family: var(--font-mono);
+    font-size: 0.95em;
+    margin-bottom: 5px;
+}
+.log-list .timestamp {
+    color: #666;
+    margin-right: 10px;
+}
+
+/* 조직 개요 */
+.security-section {
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+}
+.security-section h3 {
+    font-size: 1.1em;
+    background-color: #f5f5f5;
+    padding: 10px 15px;
+    margin-bottom: 0;
+    color: #333;
+}
+.security-section p, .security-section ul {
+    padding: 15px;
+}
+.security-section.locked h3 {
+    background-color: #eee;
+    color: #888;
+}
+.security-section.locked .access-denied-text {
+    padding: 15px;
+    font-weight: 700;
+    color: var(--color-red);
+    background-color: #fff8f8;
+    cursor: pointer;
+}
+.locked-content {
+    display: none; /* JS가 아닌 CSS로 숨김 */
+}
+
+/* 데이터베이스 테이블 */
+.db-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.db-table th, .db-table td {
+    border: 1px solid #ddd;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 0.95em;
+}
+.db-table th {
+    background-color: #f5f5f5;
+    font-weight: 700;
+}
+.db-table tbody tr {
+    cursor: pointer;
+}
+.db-table tbody tr:nth-child(even) {
+    background-color: #fdfdfd;
+}
+.db-table tbody tr:hover {
+    background-color: #f0f4f8;
+}
+
+/* 탐사자 지침 */
+.rules-list {
+    margin-left: 20px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    background: #fdfdfd;
+}
+.rules-list li {
+    margin-bottom: 12px;
+    padding-left: 5px;
+}
+
+/* 사상체 문서 */
+.article-header {
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    padding: 15px;
+    margin-bottom: 20px;
+    line-height: 1.8;
+}
+#page-article h3 {
+    font-size: 1.4em;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    margin-top: 25px;
+    color: #000;
+}
+
+/* 접근 거부 */
+.danger-text {
+    color: var(--color-red);
+}
+#return-button {
+    font-family: var(--font-main);
+    font-size: 1em;
+    padding: 8px 15px;
+    background-color: var(--color-blue);
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+}
