@@ -129,17 +129,7 @@ async function main() {
     process.exit(1);
   }
 
-  // 버전 결정
-  let version: string;
-  if (specifiedVersion) {
-    version = specifiedVersion;
-  } else {
-    const latestArchive = await findLatestArchiveVersion(entityName);
-    const currentVersion = (frontmatter["버전"] as string) ?? "v0.0";
-    version = latestArchive ? bumpVersion(latestArchive) : bumpVersion(currentVersion);
-  }
-
-  console.log(`통합 시작 — 순서코드: ${orderCode}, 사상체: ${entityName}, 버전: ${version}`);
+  console.log(`통합 시작 — 순서코드: ${orderCode}, 사상체: ${entityName}`);
 
   // 개요 본문 전체 (frontmatter 제거 후). "# APMB 사상체 문서" 헤더 포함.
   const overviewContent = parsedOverview.content.trimStart();
@@ -158,6 +148,35 @@ async function main() {
       sectionContents[key] = "";
     }
   }
+
+  // 같은 사상체의 기존 파일이 있으면 모두 archive로 이동 (버전 무관)
+  // 버전 결정보다 먼저 실행해야 archive 최고 버전이 정확히 반영됨
+  await fs.mkdir(ENTITIES_DIR, { recursive: true });
+  const allEntries = await fs.readdir(ENTITIES_DIR);
+  const existingFiles = allEntries.filter(
+    (f) => f.startsWith(`사상체_${entityName}_`) && f.endsWith(".md")
+  );
+  if (existingFiles.length > 0) {
+    await fs.mkdir(ARCHIVE_DIR, { recursive: true });
+    for (const f of existingFiles) {
+      const src = path.join(ENTITIES_DIR, f);
+      const dest = path.join(ARCHIVE_DIR, f);
+      await fs.rename(src, dest);
+      console.log(`기존 파일 archive로 이동: ${f}`);
+    }
+  }
+
+  // 버전 결정 (기존 파일 archive 이동 이후 — 최신 archive 버전 기준)
+  let version: string;
+  if (specifiedVersion) {
+    version = specifiedVersion;
+  } else {
+    const latestArchive = await findLatestArchiveVersion(entityName);
+    const currentVersion = (frontmatter["버전"] as string) ?? "v0.0";
+    version = latestArchive ? bumpVersion(latestArchive) : bumpVersion(currentVersion);
+  }
+
+  console.log(`버전: ${version}`);
 
   // 버전 갱신된 frontmatter 블록 생성
   const updatedFrontmatter = rawFrontmatter
@@ -187,21 +206,8 @@ async function main() {
 
   const integrated = parts.join("\n");
 
-  // 출력 파일명 결정
-  await fs.mkdir(ENTITIES_DIR, { recursive: true });
   const outputFileName = `사상체_${entityName}_${version}.md`;
   const outputPath = path.join(ENTITIES_DIR, outputFileName);
-
-  // 동일 파일이 이미 있으면 archive로 이동
-  try {
-    await fs.access(outputPath);
-    await fs.mkdir(ARCHIVE_DIR, { recursive: true });
-    const archiveDest = path.join(ARCHIVE_DIR, outputFileName);
-    await fs.rename(outputPath, archiveDest);
-    console.log(`기존 파일 archive로 이동: ${outputFileName}`);
-  } catch {
-    // 파일이 없으면 그냥 진행
-  }
 
   await fs.writeFile(outputPath, integrated, "utf-8");
   console.log(`통합본 저장: docs/entities/${outputFileName}`);
