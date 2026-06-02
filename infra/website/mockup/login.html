@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APMB Intranet :: IG Clearance Gate</title>
+<style>
+  :root {
+    --bg: #000000;
+    --fg: #c8c8c8;
+    --fg-dim: #6a6a6a;
+    --fg-strong: #ffffff;
+    --accent: #e4e4e4;       /* APMB 상징색: 밝은 그레이 */
+    --warn: #d8c87a;
+    --crit: #d88a7a;
+    --ok-tag: #88c878;
+    --scanline: rgba(255, 255, 255, 0.04);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    /* 박스 드로잉 문자 안정 렌더링용 폰트 폴백 */
+    font-family: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', 'Source Code Pro',
+                 'D2Coding', 'Menlo', 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    height: 100%;
+    overflow: hidden;
+    text-shadow: 0 0 1px rgba(220, 220, 220, 0.55);
+  }
+
+  /* === WebCore CRT 효과 1: 스캔라인 === */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      var(--scanline) 2px,
+      var(--scanline) 3px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* === WebCore CRT 효과 2: 노이즈 === */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.07 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+    z-index: 99;
+    opacity: 0.55;
+    animation: noise 0.42s steps(3) infinite;
+  }
+
+  @keyframes noise {
+    0%   { transform: translate(0, 0); }
+    33%  { transform: translate(-1px, 1px); }
+    66%  { transform: translate(1px, -1px); }
+    100% { transform: translate(0, 0); }
+  }
+
+  /* === WebCore CRT 효과 3: 비네팅 (가장자리 어두워짐) === */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 101;
+    background:
+      radial-gradient(ellipse at center,
+        transparent 50%,
+        rgba(0, 0, 0, 0.45) 100%);
+  }
+
+  /* === WebCore CRT 효과 4: 천천히 흐르는 스캔 빔 === */
+  .scanbeam {
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 120px;
+    pointer-events: none;
+    z-index: 102;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(255, 255, 255, 0.025) 40%,
+      rgba(255, 255, 255, 0.045) 50%,
+      rgba(255, 255, 255, 0.025) 60%,
+      transparent 100%);
+    animation: scanbeam-fall 7s linear infinite;
+  }
+
+  @keyframes scanbeam-fall {
+    0%   { top: -120px; }
+    100% { top: 100vh; }
+  }
+
+  /* === WebCore CRT 효과 5: 전체 깜빡임 === */
+  @keyframes crt-flicker {
+    0%   { opacity: 1; }
+    96%  { opacity: 1; }
+    97%  { opacity: 0.91; }
+    98%  { opacity: 1; }
+    99%  { opacity: 0.96; }
+    100% { opacity: 1; }
+  }
+
+  .console {
+    position: relative;
+    z-index: 1;
+    padding: 28px 40px;
+    height: 100vh;
+    overflow: hidden;
+    animation: crt-flicker 5s infinite;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .console-stream {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.18s linear;
+  }
+
+  .line {
+    white-space: pre-wrap;
+    word-break: break-all;
+    opacity: 0;
+    flex-shrink: 0;
+    transition: opacity 0.08s linear;
+  }
+
+  .line.visible { opacity: 1; }
+
+  .ok    { color: var(--fg); }
+  .info  { color: var(--fg-dim); }
+  .warn  { color: var(--warn); }
+  .crit  { color: var(--crit); }
+  .label { color: var(--accent); }
+  .dim   { color: var(--fg-dim); }
+  .strong { color: var(--fg-strong); font-weight: bold; }
+  .num    { color: var(--fg-strong); font-weight: bold; }
+  .cmd    { color: var(--fg-strong); }
+
+  .tag-ok   { color: var(--ok-tag); }
+  .tag-info { color: var(--fg-dim); }
+  .tag-warn { color: var(--warn); }
+  .tag-crit { color: var(--crit); }
+  .tag-err  { color: var(--crit); }
+
+  /* === APMB 진입 패널 === */
+  .panel {
+    margin: 22px 0 14px 0;
+    opacity: 0;
+    flex-shrink: 0;
+    transition: opacity 0.18s linear;
+  }
+  .panel.visible { opacity: 1; }
+
+  .panel .divider {
+    color: var(--fg-dim);
+    white-space: pre;
+    line-height: 1;
+  }
+
+  .panel .spacer { height: 12px; }
+
+  /* === 안정형 ASCII 배너 (블록 문자 # 만 사용 — 박스 드로잉 폰트 문제 회피) === */
+  .banner {
+    color: var(--accent);
+    font-weight: normal;
+    line-height: 1.05;
+    letter-spacing: 0;
+    white-space: pre;
+    padding-left: 24px;
+    text-shadow:
+      0 0 2px rgba(228, 228, 228, 0.55),
+      0 0 6px rgba(255, 255, 255, 0.22),
+      0 0 14px rgba(228, 228, 228, 0.12);
+  }
+
+  .panel .meta {
+    color: var(--fg);
+    padding-left: 24px;
+    margin-top: 12px;
+    line-height: 1.55;
+    white-space: pre;
+  }
+
+  .panel .meta .k {
+    color: var(--fg-dim);
+    display: inline-block;
+    width: 14ch;
+  }
+
+  .panel .classification {
+    color: var(--fg-dim);
+    padding-left: 24px;
+    margin-top: 10px;
+    letter-spacing: 1.5px;
+    font-size: 12px;
+  }
+
+  /* === CLI 프롬프트 === */
+  .prompt-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: nowrap;
+    white-space: pre;
+    opacity: 0;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: opacity 0.08s linear;
+  }
+  .prompt-row.visible { opacity: 1; }
+
+  /* 입력 주소 + 단계 라벨 (한 줄 안에) */
+  .prompt-addr {
+    color: var(--fg);
+    white-space: pre;
+  }
+  .prompt-addr .user { color: var(--fg-strong); }
+  .prompt-addr .at   { color: var(--fg-dim); }
+  .prompt-addr .ip   { color: var(--fg); }
+  .prompt-addr .path { color: var(--fg-dim); }
+  .prompt-addr .sigil { color: var(--accent); margin-right: 6px; }
+
+  .prompt-stage {
+    color: var(--fg-dim);
+    margin-right: 6px;
+    white-space: pre;
+  }
+
+  .prompt-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--fg);
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    padding: 0;
+    margin: 0;
+    flex: 1;
+    caret-color: var(--accent);
+    text-shadow: inherit;
+    min-width: 0;
+  }
+
+  /* ==================== 모바일 반응형 (브레이크포인트 1024px) ==================== */
+  @media (max-width: 1023.98px) {
+    html, body {
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .console {
+      padding: 16px 12px;
+    }
+
+    /* 긴 줄 자동 줄바꿈 — CLI 톤을 유지하면서 가독성 확보 */
+    .line {
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* === 패널 — 모바일 변형 === */
+    .panel {
+      margin: 16px 0 12px 0;
+    }
+    .panel .spacer { height: 8px; }
+
+    /* ASCII 분할선은 모바일에서 잘리므로 시각 분할선으로 교체 */
+    .panel .divider {
+      font-size: 0;
+      line-height: 0;
+      height: 1px;
+      background: var(--fg-dim);
+      width: 100%;
+    }
+
+    /* 배너 — 좌측 들여쓰기 축소 + 글자 크기 축소 */
+    .banner {
+      padding-left: 0;
+      font-size: 10px;
+      line-height: 1.05;
+      text-align: center;
+      letter-spacing: -1px;
+    }
+
+    /* 메타 — 라벨과 값을 별도 줄로 분리 */
+    .panel .meta {
+      padding-left: 0;
+      line-height: 1.4;
+      white-space: normal;
+      font-size: 11px;
+    }
+    .panel .meta .k {
+      display: block;
+      width: auto;
+      margin-top: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+
+    .panel .classification {
+      padding-left: 0;
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 1px;
+      margin-top: 8px;
+    }
+
+    /* === 프롬프트 — 한 줄 → 2줄 분리 === */
+    .prompt-row {
+      flex-wrap: wrap;
+      gap: 2px 4px;
+    }
+    .prompt-addr {
+      width: 100%;
+      flex-shrink: 0;
+      font-size: 11px;
+    }
+    .prompt-stage {
+      font-size: 11px;
+      margin-right: 4px;
+    }
+    .prompt-input {
+      font-size: 12px;
+      min-width: 120px;
+      flex: 1 1 120px;
+    }
+
+    /* 모드 힌트 — 화면 하단 위치 조정 */
+    .mode-hint {
+      bottom: 14px;
+      left: 12px;
+      right: 12px;
+      font-size: 10px;
+      line-height: 1.6;
+    }
+  }
+
+  /* mockup 안내용 컨트롤 */
+  .mockup-controls {
+    position: fixed;
+    bottom: 8px;
+    right: 8px;
+    font-size: 11px;
+    color: var(--fg-dim);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 4px 8px;
+    border: 1px solid var(--fg-dim);
+    z-index: 200;
+    user-select: none;
+  }
+  .mockup-controls button {
+    background: transparent;
+    color: var(--fg-dim);
+    border: 1px solid var(--fg-dim);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 2px 6px;
+    margin-left: 4px;
+  }
+  .mockup-controls button:hover {
+    color: var(--fg);
+    border-color: var(--fg);
+  }
+</style>
+</head>
+<body>
+
+<div class="vignette"></div>
+<div class="scanbeam"></div>
+
+<div class="console">
+  <div class="console-stream" id="stream"></div>
+</div>
+
+<div class="mockup-controls">
+  [mockup]
+  <button onclick="bootConsole()">처음부터 재생</button>
+</div>
+
+<script>
+// ====================================================================
+// APMB 인트라넷 콘솔 — 로그인 / 회원가입 (CLI 형)
+// 인트로 부팅 이후 이 페이지가 이어지는 흐름
+// ====================================================================
+
+const stream     = document.getElementById('stream');
+const consoleEl  = document.querySelector('.console');
+
+// ---------- 가상 IP (세션 슬롯이 할당받은 APMB 내부 네트워크 주소) ----------
+// 시청자의 실제 IP가 아니라, 컨셉상 IG 세션이 APMB 게이트웨이로부터 부여받은 가상 IP.
+const SESSION_IP = '10.42.7.187';
+
+// ---------- APMB ASCII 배너 (PC: 7행, 모바일: 4행 압축판) ----------
+const apmbBannerPC = [
+  '   ###     ########   ###    ###  ########   ',
+  '  #####    ##     ##  ####  ####  ##     ##  ',
+  ' ##   ##   ##     ##  ## #### ##  ##     ##  ',
+  '##     ##  ########   ##  ##  ##  ########   ',
+  '#########  ##         ##      ##  ##     ##  ',
+  '##     ##  ##         ##      ##  ##     ##  ',
+  '##     ##  ##         ##      ##  ########   '
+];
+
+const apmbBannerMobile = [
+  ' ##   ###  ## ##  ###  ',
+  '####  # #  # # #  # #  ',
+  '#  #  ###  # # #  ###  ',
+  '####  #    #   #  # #  '
+];
+
+function pickBanner() {
+  return window.innerWidth < 1024 ? apmbBannerMobile : apmbBannerPC;
+}
+
+// PC용 분할선 (모바일에서는 CSS가 시각 분할선으로 교체)
+const dividerLine = '─'.repeat(78);
+
+// ---------- 접속 성공 로그 (인트로 종료 직후 짧게) ----------
+const connectLog = [
+  { text: '[ OK ] Connection to apmb-intranet established (10.42.4.7:443)', cls: 'ok', tag: 'ok', delay: 80 },
+  { text: '[ OK ] Channel secured :: TLS 1.3, AES-256-GCM, X25519+P-384 hybrid', cls: 'ok', tag: 'ok', delay: 70 },
+  { text: '[ OK ] Session token issued :: ig-pool-1437 (valid 24h on activity)', cls: 'ok', tag: 'ok', delay: 70 },
+  { text: '[ OK ] Provisional address assigned :: ' + SESSION_IP + '/22', cls: 'ok', tag: 'ok', delay: 70 },
+  { text: '[INFO] Launching APMB Intranet Console v6.0.3 ...', cls: 'info', tag: 'info', delay: 260 },
+  { text: '', cls: 'info', tag: '', delay: 40 }
+];
+
+// ---------- 안내 페이즈 (배너 아래) ----------
+const introGuide = [
+  { text: 'APMB 인트라넷에 성공적으로 접속하였습니다.', cls: 'label', tag: '', delay: 90 },
+  { text: '시스템에 접속하기 위해 다음의 안내를 따르십시오.', cls: 'label', tag: '', delay: 180 },
+  { text: '', cls: 'info', tag: '', delay: 30 },
+  { text: '  [1] 계정 접속  (로그인)', cls: 'ok', tag: '', delay: 50 },
+  { text: '  [2] 계정 등록  (회원가입)', cls: 'ok', tag: '', delay: 50 },
+  { text: '', cls: 'info', tag: '', delay: 30 },
+  { text: '명령어 사용 가능 — 자세한 안내는 /help 를 입력하십시오.', cls: 'dim', tag: '', delay: 80 },
+  { text: '', cls: 'info', tag: '', delay: 30 }
+];
+
+// ====================================================================
+// 단계 관리
+// ====================================================================
+// stage: 'choose' | 'login' | 'signup' | 'done'
+let stage = 'choose';
+let stepIdx = 0;
+let values = {};
+let activePrompt = null;
+let booting = false;
+
+const flows = {
+  login: [
+    { key: 'identifier',        label: '식별자  입력', hide: false },
+    { key: 'identifier-number', label: '식별번호 입력', hide: true  }
+  ],
+  signup: [
+    { key: 'username',          label: '사용자명 입력', hide: false },
+    { key: 'identifier',        label: '식별자  입력', hide: false },
+    { key: 'identifier-number', label: '식별번호 입력', hide: true  }
+  ]
+};
+
+// ====================================================================
+// 렌더 헬퍼
+// ====================================================================
+function appendLine(line) {
+  const div = document.createElement('div');
+  div.className = 'line';
+  const text = line.text || '';
+  if (line.tag) {
+    const match = text.match(/^(\[[A-Z\s]+\])(.*)$/);
+    if (match) {
+      const tag = document.createElement('span');
+      tag.className = 'tag-' + line.tag;
+      tag.textContent = match[1];
+      const body = document.createElement('span');
+      body.className = line.cls;
+      body.textContent = match[2];
+      div.appendChild(tag);
+      div.appendChild(body);
+    } else {
+      div.textContent = text;
+      if (line.cls) div.classList.add(line.cls);
+    }
+  } else {
+    div.textContent = text;
+    if (line.cls) div.classList.add(line.cls);
+  }
+  stream.appendChild(div);
+  requestAnimationFrame(() => {
+    div.classList.add('visible');
+    autoScroll();
+  });
+  return div;
+}
+
+function appendPanel() {
+  const panel = document.createElement('div');
+  panel.className = 'panel';
+
+  const top = document.createElement('div');
+  top.className = 'divider';
+  top.textContent = dividerLine;
+  panel.appendChild(top);
+
+  const sp1 = document.createElement('div');
+  sp1.className = 'spacer';
+  panel.appendChild(sp1);
+
+  const banner = document.createElement('div');
+  banner.className = 'banner';
+  banner.textContent = pickBanner().join('\n');
+  panel.appendChild(banner);
+
+  const meta = document.createElement('div');
+  meta.className = 'meta';
+  meta.innerHTML =
+    '<span class="k">System</span>Intranet Access System  ·  v6.0.3-rc4\n' +
+    '<span class="k">Operated by</span>Anomalous Phenomena Management Bureau\n' +
+    '<span class="k">Gate</span>Level IG Clearance — Provisional External Access';
+  panel.appendChild(meta);
+
+  const cls = document.createElement('div');
+  cls.className = 'classification';
+  cls.textContent = '— CLASSIFIED · GOVERNMENT USE ONLY —';
+  panel.appendChild(cls);
+
+  const sp2 = document.createElement('div');
+  sp2.className = 'spacer';
+  panel.appendChild(sp2);
+
+  const bot = document.createElement('div');
+  bot.className = 'divider';
+  bot.textContent = dividerLine;
+  panel.appendChild(bot);
+
+  stream.appendChild(panel);
+  requestAnimationFrame(() => {
+    panel.classList.add('visible');
+    autoScroll();
+  });
+  return panel;
+}
+
+function autoScroll() {
+  const overflow = stream.getBoundingClientRect().bottom - consoleEl.getBoundingClientRect().bottom;
+  if (overflow > 0) {
+    const current = parseFloat(stream.dataset.offset || '0');
+    const next = current - overflow;
+    stream.dataset.offset = next;
+    stream.style.transform = `translateY(${next}px)`;
+  }
+}
+
+// ====================================================================
+// CLI 프롬프트
+// ====================================================================
+// 프롬프트 형식: IG@10.42.7.187:~$ [단계라벨 > ]
+//   - 입력 주소: IG@10.42.7.187:~$
+//   - 단계가 있을 때(login/signup 입력 중): 단계라벨 추가
+//   - 단계가 없을 때(choose, 자유 명령 입력): 입력 주소만
+function buildAddr() {
+  const wrap = document.createElement('span');
+  wrap.className = 'prompt-addr';
+  wrap.innerHTML =
+    '<span class="user">IG</span>' +
+    '<span class="at">@</span>' +
+    '<span class="ip">' + SESSION_IP + '</span>' +
+    '<span class="path">:~</span>' +
+    '<span class="sigil">$</span>';
+  return wrap;
+}
+
+function showPrompt() {
+  const row = document.createElement('div');
+  row.className = 'prompt-row';
+
+  row.appendChild(buildAddr());
+
+  // 단계 라벨 (해당 단계가 있을 때만)
+  if (stage === 'login' || stage === 'signup') {
+    const step = flows[stage][stepIdx];
+    const stageEl = document.createElement('span');
+    stageEl.className = 'prompt-stage';
+    stageEl.textContent = step.label + ' > ';
+    row.appendChild(stageEl);
+  } else if (stage === 'choose') {
+    const stageEl = document.createElement('span');
+    stageEl.className = 'prompt-stage';
+    stageEl.textContent = '선택 > ';
+    row.appendChild(stageEl);
+  }
+
+  const input = document.createElement('input');
+  input.className = 'prompt-input';
+  const hide = (stage === 'login' || stage === 'signup') && flows[stage][stepIdx].hide;
+  input.type = hide ? 'password' : 'text';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  row.appendChild(input);
+
+  stream.appendChild(row);
+  requestAnimationFrame(() => {
+    row.classList.add('visible');
+    input.focus();
+    autoScroll();
+  });
+
+  activePrompt = input;
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const raw = input.value;
+    const val = raw.trim();
+
+    // 빈 입력 무시 (프롬프트 유지)
+    if (val === '') return;
+
+    // 입력 확정 — 화면에 echo 처리 (password는 마스킹)
+    if (hide && val.length > 0) {
+      input.type = 'text';
+      input.value = '•'.repeat(val.length);
+    }
+    input.disabled = true;
+    activePrompt = null;
+
+    // 슬래시 명령은 무조건 명령으로 처리
+    if (val.startsWith('/')) {
+      handleCommand(val);
+      return;
+    }
+
+    // 단계별 입력 처리
+    handleInput(val);
+  });
+}
+
+// ====================================================================
+// 명령어 시스템
+// ====================================================================
+function handleCommand(cmd) {
+  const parts = cmd.slice(1).split(/\s+/);
+  const name = parts[0].toLowerCase();
+
+  switch (name) {
+    case 'help':
+      showHelp();
+      break;
+    case 'login':
+      switchStage('login', '로그인 모드로 전환합니다 (IG 등급 인가 확인).');
+      break;
+    case 'signup':
+      switchStage('signup', '회원가입 모드로 전환합니다 (IG 등급 임시 인가 신청).');
+      break;
+    case 'clear':
+      // 화면 초기화 — 단, 안내 페이즈 컨텍스트는 유지하지 않고 다시 출력
+      stream.innerHTML = '';
+      stream.style.transform = '';
+      stream.dataset.offset = '0';
+      stage = 'choose';
+      stepIdx = 0;
+      values = {};
+      introGuide.forEach((l) => appendLine(l));
+      setTimeout(showPrompt, 200);
+      break;
+    case 'whoami':
+      appendLine({ text: 'IG@' + SESSION_IP + ' :: provisional clearance, slot ig-pool-1437', cls: 'ok', tag: '', delay: 0 });
+      appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+      setTimeout(showPrompt, 80);
+      break;
+    case 'exit':
+    case 'quit':
+      appendLine({ text: '본 인트라넷은 인가된 외부 탐사자에 한해 접근 가능합니다. 세션을 종료할 수 없습니다.', cls: 'warn', tag: '', delay: 0 });
+      appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+      setTimeout(showPrompt, 80);
+      break;
+    default:
+      appendLine({ text: '[ ERR ] unknown command: /' + name, cls: 'crit', tag: 'err', delay: 0 });
+      appendLine({ text: '        사용 가능한 명령 목록은 /help 를 입력하십시오.', cls: 'dim', tag: '', delay: 0 });
+      appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+      setTimeout(showPrompt, 80);
+  }
+}
+
+function showHelp() {
+  appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+  appendLine({ text: '  사용 가능 명령:', cls: 'dim', tag: '', delay: 0 });
+  appendLine({ text: '    /login    로그인 모드로 전환 (식별자 + 식별번호)',  cls: 'dim', tag: '', delay: 0 });
+  appendLine({ text: '    /signup   회원가입 모드로 전환 (사용자명 + 식별자 + 식별번호)', cls: 'dim', tag: '', delay: 0 });
+  appendLine({ text: '    /whoami   현재 세션 정보 표시',  cls: 'dim', tag: '', delay: 0 });
+  appendLine({ text: '    /clear    화면 초기화',  cls: 'dim', tag: '', delay: 0 });
+  appendLine({ text: '    /help     이 도움말 표시',  cls: 'dim', tag: '', delay: 0 });
+  appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+  appendLine({ text: '  안내:', cls: 'dim', tag: '', delay: 0 });
+  appendLine({ text: '    선택 단계에서는 1 (계정 접속) 또는 2 (계정 등록) 를 입력하십시오.', cls: 'dim', tag: '', delay: 0 });
+  appendLine({ text: '    /로 시작하는 입력은 명령으로 처리됩니다.', cls: 'dim', tag: '', delay: 0 });
+  appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+  setTimeout(showPrompt, 100);
+}
+
+function switchStage(next, message) {
+  appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+  appendLine({ text: '[INFO] ' + message, cls: 'info', tag: 'info', delay: 0 });
+  appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+  stage = next;
+  stepIdx = 0;
+  values = {};
+  setTimeout(showPrompt, 150);
+}
+
+// ====================================================================
+// 단계별 입력 처리
+// ====================================================================
+function handleInput(val) {
+  if (stage === 'choose') {
+    if (val === '1') {
+      switchStage('login', '계정 접속을 시작합니다.');
+    } else if (val === '2') {
+      switchStage('signup', '계정 등록을 시작합니다.');
+    } else {
+      appendLine({ text: '[ ERR ] 잘못된 입력입니다: "' + val + '"', cls: 'crit', tag: 'err', delay: 0 });
+      appendLine({ text: '        1 (계정 접속) 또는 2 (계정 등록) 를 입력하십시오.', cls: 'dim', tag: '', delay: 0 });
+      appendLine({ text: '        명령 사용은 /help 를 입력하십시오.', cls: 'dim', tag: '', delay: 0 });
+      appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+      setTimeout(showPrompt, 80);
+    }
+    return;
+  }
+
+  // login / signup 단계 처리
+  const flow = flows[stage];
+  const step = flow[stepIdx];
+  values[step.key] = val;
+  stepIdx += 1;
+
+  if (stepIdx < flow.length) {
+    setTimeout(showPrompt, 120);
+  } else {
+    submit();
+  }
+}
+
+// ====================================================================
+// 제출
+// ====================================================================
+function submit() {
+  stage = 'done';
+  if (stage === 'done') {} // (linter)
+
+  // 직전 모드를 기억
+  const wasLogin = (flows.login.length === Object.keys(values).length) && ('identifier' in values) && !('username' in values);
+
+  appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+  if (wasLogin) {
+    appendLine({ text: '[INFO] APMB 디렉터리에 인가 정보를 조회 중...', cls: 'info', tag: 'info', delay: 0 });
+    setTimeout(() => {
+      appendLine({ text: '[ OK ] 식별자 확인 (IG 인가, 슬롯 ig-pool-1437)', cls: 'ok', tag: 'ok', delay: 0 });
+      appendLine({ text: '[ OK ] 식별번호 검증 완료', cls: 'ok', tag: 'ok', delay: 0 });
+      appendLine({ text: '[INFO] 세션 등록 완료. 메인 대시보드로 이동합니다...', cls: 'info', tag: 'info', delay: 0 });
+      appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+      appendLine({ text: '[mockup] 다음 페이지 → / (메인 대시보드)', cls: 'label', tag: '', delay: 0 });
+    }, 550);
+  } else {
+    appendLine({ text: '[INFO] 임시 인가 신청서를 제출 중...', cls: 'info', tag: 'info', delay: 0 });
+    setTimeout(() => {
+      appendLine({ text: '[ OK ] 사용자명 예약 :: ' + values['username'], cls: 'ok', tag: 'ok', delay: 0 });
+      appendLine({ text: '[ OK ] 식별자 등록 완료', cls: 'ok', tag: 'ok', delay: 0 });
+      appendLine({ text: '[ OK ] 식별번호 해시 저장 (bcrypt cost 12)', cls: 'ok', tag: 'ok', delay: 0 });
+      appendLine({ text: '[ OK ] IG 임시 인가 부여 (24시간, 활동 시 갱신)', cls: 'ok', tag: 'ok', delay: 0 });
+      appendLine({ text: '[INFO] 보안 서약서 페이지로 이동합니다...', cls: 'info', tag: 'info', delay: 0 });
+      appendLine({ text: '', cls: 'info', tag: '', delay: 0 });
+      appendLine({ text: '[mockup] 다음 페이지 → /oath (보안 서약서)', cls: 'label', tag: '', delay: 0 });
+    }, 650);
+  }
+}
+
+// ====================================================================
+// 부팅
+// ====================================================================
+function bootConsole() {
+  if (booting) return;
+  booting = true;
+
+  stream.innerHTML = '';
+  stream.style.transform = '';
+  stream.dataset.offset = '0';
+  stage = 'choose';
+  stepIdx = 0;
+  values = {};
+  activePrompt = null;
+
+  let acc = 0;
+
+  // 1) 접속 성공 로그
+  connectLog.forEach((line) => {
+    setTimeout(() => appendLine(line), acc);
+    acc += line.delay;
+  });
+
+  // 2) APMB 진입 패널
+  setTimeout(appendPanel, acc);
+  acc += 320;
+
+  // 3) 안내 페이즈
+  introGuide.forEach((line) => {
+    setTimeout(() => appendLine(line), acc);
+    acc += line.delay;
+  });
+
+  // 4) 첫 프롬프트 (선택 단계)
+  setTimeout(() => {
+    showPrompt();
+    booting = false;
+  }, acc + 80);
+}
+
+window.addEventListener('load', bootConsole);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APMB :: 본국 개요 (v2 — 인쇄 행정 문서 톤)</title>
+<style>
+  :root {
+    /* 외피 — 관리국 시스템 레이어 (기존 계승) */
+    --bg-page:        #c8ccd0;       /* 책상 톤 — 종이가 놓인 배경 */
+    --bg-header:      #2c333b;
+    --bg-header-2:    #1f2730;
+    --fg-text:        #1a1f24;
+    --fg-text-dim:    #5a6470;
+    --accent-cool:    #6e7c88;
+    --accent-cool-light: #a8b4be;
+    --border-dark:    #6a7078;
+
+    /* === 행정 문서 인쇄 톤 (신규) === */
+    --paper:           #f4f0e8;     /* 살짝 누렇게 바랜 종이 톤 */
+    --paper-edge:      #e0dccc;     /* 종이 모서리 음영 */
+    --paper-fold:      #c8c4b4;     /* 접힘 자국 */
+    --ink:             #1a1a1a;     /* 인쇄 잉크 (순흑보다 살짝 옅음) */
+    --ink-dim:         #555048;     /* 옅은 잉크 */
+    --ink-stamp-red:   #8a2820;     /* 직인 — 어두운 적색 */
+    --ink-stamp-blue:  #1a2858;     /* 검인 — 어두운 청색 */
+    --rule:            #888070;     /* 표·구분선 잉크 */
+    --redact-ink:      #0a0a0a;     /* 검열 띠 */
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: var(--bg-page);
+    color: var(--fg-text);
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  body { overflow-x: hidden; }
+
+  /* 외피 CRT 노이즈 (기존 약화 톤) */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.025 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+    z-index: 99;
+    opacity: 0.6;
+  }
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 101;
+    background: radial-gradient(ellipse 140% 140% at center, transparent 65%, rgba(0, 0, 0, 0.16) 100%);
+  }
+
+  /* ==================== 외피 — 헤더·메뉴·푸터 (기존 계승 압축) ==================== */
+  .site-header {
+    background: linear-gradient(180deg, var(--bg-header) 0%, var(--bg-header-2) 100%);
+    color: #ffffff;
+    position: relative;
+    z-index: 2;
+  }
+  .site-header .inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 12px 20px 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .site-header .brand { display: flex; align-items: center; gap: 12px; }
+  .site-header .logo { width: 32px; height: 32px; }
+  .site-header .brand-text { line-height: 1.15; }
+  .site-header .brand-text .org-en {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--accent-cool-light);
+  }
+  .site-header .brand-text .org-ko {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ffffff;
+  }
+  .search-wrap {
+    display: flex;
+    height: 28px;
+    min-width: 260px;
+    background: #ffffff;
+    border: 1px solid var(--border-dark);
+  }
+  .search-wrap input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--fg-text);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 0 10px;
+  }
+  .search-wrap .search-btn {
+    background: linear-gradient(180deg, #d8dde2 0%, #b8bdc2 100%);
+    border: none;
+    border-left: 1px solid var(--border-dark);
+    padding: 0 12px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .top-nav {
+    background: #4a525c;
+    position: relative;
+    z-index: 2;
+  }
+  .top-nav .inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    height: 34px;
+  }
+  .top-nav .nav-item {
+    padding: 0 22px;
+    color: #ffffff;
+    font-size: 13px;
+    cursor: pointer;
+    border-right: 1px solid #3a424c;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+  }
+  .top-nav .nav-item.active { background: var(--bg-header-2); }
+
+  /* ==================== 페이지 영역 ==================== */
+  .page {
+    max-width: 980px;        /* 종이 1면 + 여백 */
+    margin: 0 auto;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 위치 경로 — 책상 톤 위에 작은 글씨 */
+  .breadcrumb {
+    padding: 10px 0;
+    color: var(--fg-text-dim);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .breadcrumb a { color: var(--fg-text-dim); text-decoration: none; }
+  .breadcrumb .sep { margin: 0 6px; }
+  .breadcrumb .current { color: var(--fg-text); }
+
+  /* 접속자 — 짧은 한 줄로 압축 (책상 위에 작은 인쇄 라벨처럼) */
+  .access-strip {
+    background: rgba(0, 0, 0, 0.04);
+    border-top: 1px solid var(--accent-cool);
+    border-bottom: 1px solid var(--accent-cool);
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--fg-text-dim);
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .access-strip .right { color: var(--fg-text); }
+  .access-strip .redact {
+    display: inline-block;
+    background: var(--redact-ink);
+    color: var(--redact-ink);
+    padding: 0 4px;
+    user-select: none;
+  }
+
+  /* ==================== 종이 (행정 문서) ==================== */
+  .paper {
+    position: relative;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow:
+      /* 종이 모서리 음영 — 책상에 놓인 듯 */
+      0 0 0 1px var(--paper-edge),
+      4px 4px 0 var(--paper-edge),
+      12px 16px 24px rgba(0, 0, 0, 0.18);
+    margin-bottom: 36px;
+    /* 인쇄 잉크 톤의 미세한 종이 결 */
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'><filter id='paper'><feTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55  0 0 0 0 0.48  0 0 0 0 0.38  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23paper)'/></svg>"),
+      linear-gradient(180deg, var(--paper) 0%, #ede9df 100%);
+  }
+
+  /* 종이 우상단 접힘 자국 */
+  .paper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 32px;
+    height: 32px;
+    background:
+      linear-gradient(225deg, var(--paper-fold) 0%, var(--paper-fold) 50%, transparent 50%, transparent 100%);
+    pointer-events: none;
+  }
+  .paper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 32px;
+    width: 0;
+    height: 0;
+    border-top: 32px solid var(--paper);
+    border-left: 32px solid transparent;
+    filter: drop-shadow(-1px 1px 0 var(--paper-edge));
+    pointer-events: none;
+  }
+
+  /* === 행정 양식 표제 영역 === */
+  .doc-letterhead {
+    border-bottom: 3px double var(--ink);
+    padding: 28px 48px 18px 48px;
+    position: relative;
+  }
+  .doc-letterhead .doc-no {
+    position: absolute;
+    top: 24px;
+    right: 48px;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 1px;
+    text-align: right;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    line-height: 1.6;
+  }
+  .doc-letterhead .org-formal {
+    font-size: 13px;
+    letter-spacing: 6px;
+    color: var(--ink-dim);
+    margin-bottom: 4px;
+  }
+  .doc-letterhead h1 {
+    margin: 6px 0 8px 0;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -1px;
+    line-height: 1.2;
+  }
+  .doc-letterhead .subtitle {
+    font-size: 13px;
+    color: var(--ink-dim);
+    letter-spacing: 0.5px;
+  }
+
+  /* === 결재·검인 영역 (표제 옆 작은 박스들) === */
+  .doc-stamps {
+    display: flex;
+    gap: 6px;
+    position: absolute;
+    bottom: -1px;
+    right: 48px;
+    transform: translateY(50%);
+    z-index: 3;
+  }
+  .doc-stamp {
+    width: 60px;
+    height: 60px;
+    border: 1.5px solid var(--ink-stamp-blue);
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--ink-stamp-blue);
+    line-height: 1.3;
+    letter-spacing: 1px;
+    transform: rotate(-2deg);
+    box-shadow: 1px 1px 0 var(--paper-edge);
+  }
+  .doc-stamp .top {
+    border-bottom: 1px solid var(--ink-stamp-blue);
+    padding: 2px 0;
+    width: 100%;
+    text-align: center;
+  }
+  .doc-stamp .bot {
+    padding: 4px 0;
+    width: 100%;
+    text-align: center;
+    font-weight: 600;
+  }
+  /* 직인 — 적색 원형, 살짝 흐릿한 도장 자국 */
+  .doc-stamp.seal {
+    border: 2px solid var(--ink-stamp-red);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-stamp-red);
+    font-weight: 700;
+    letter-spacing: 1px;
+    transform: rotate(8deg);
+    box-shadow: none;
+    position: relative;
+    opacity: 0.78;
+  }
+  .doc-stamp.seal::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid var(--ink-stamp-red);
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+  .doc-stamp.seal .top { border: none; padding: 0; font-size: 8px; }
+  .doc-stamp.seal .bot { padding: 0; font-size: 11px; }
+
+  /* === 본문 영역 (2단 칼럼, 인쇄 톤) === */
+  .doc-body {
+    padding: 56px 48px 40px 48px;
+    color: var(--ink);
+  }
+
+  /* 도입부 — 단단 (전체 폭) */
+  .doc-preamble {
+    margin: 0 0 28px 0;
+    padding: 12px 0 14px 0;
+    border-top: 1px solid var(--ink-dim);
+    border-bottom: 1px solid var(--ink-dim);
+    font-size: 13px;
+    color: var(--ink);
+    line-height: 1.75;
+    text-align: justify;
+  }
+  .doc-preamble::before {
+    content: '前 文';
+    display: block;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--ink-dim);
+    margin-bottom: 6px;
+  }
+
+  /* === 2단 칼럼 본문 === */
+  .doc-content {
+    column-count: 2;
+    column-gap: 28px;
+    column-rule: 1px solid var(--ink-dim);
+    text-align: justify;
+    hyphens: auto;
+  }
+
+  .doc-content section {
+    break-inside: avoid-column;
+    margin-bottom: 16px;
+  }
+
+  /* 장 제목 */
+  .doc-content h2 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 0.5px;
+    border-left: 4px solid var(--ink);
+    padding-left: 8px;
+    line-height: 1.3;
+  }
+  .doc-content h2 .num {
+    color: var(--ink-dim);
+    margin-right: 6px;
+    font-weight: 500;
+  }
+
+  .doc-content h3 {
+    margin: 12px 0 6px 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    border-bottom: 1px solid var(--ink-dim);
+    padding-bottom: 2px;
+    display: inline-block;
+  }
+
+  .doc-content p {
+    margin: 0 0 8px 0;
+    font-size: 12.5px;
+    line-height: 1.75;
+    color: var(--ink);
+  }
+
+  /* === 행번호 (좌측 옅게) === */
+  .doc-content .lined {
+    counter-reset: line;
+    padding-left: 24px;
+    position: relative;
+  }
+  .doc-content .lined p {
+    counter-increment: line;
+    position: relative;
+  }
+  .doc-content .lined p::before {
+    content: counter(line, decimal-leading-zero);
+    position: absolute;
+    left: -24px;
+    top: 4px;
+    font-size: 9px;
+    color: var(--ink-dim);
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    letter-spacing: 0;
+  }
+
+  /* 본문 내 작은 표 — 인쇄 양식 */
+  .doc-content table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    margin: 6px 0 10px 0;
+    color: var(--ink);
+    break-inside: avoid;
+  }
+  .doc-content table th {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 4px 6px;
+    border: 1px solid var(--rule);
+    text-align: left;
+    font-weight: 700;
+    font-size: 11px;
+  }
+  .doc-content table td {
+    padding: 4px 6px;
+    border: 1px solid var(--rule);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  /* 강조 */
+  .doc-content strong {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .doc-content em {
+    font-style: normal;
+    color: var(--ink);
+    background: linear-gradient(transparent 60%, rgba(0, 0, 0, 0.12) 60%);
+  }
+
+  /* 검열 — 물리적 검은 띠 */
+  .doc-content .redact {
+    display: inline-block;
+    background: var(--redact-ink);
+    color: var(--redact-ink);
+    padding: 0 4px;
+    margin: 0 1px;
+    user-select: none;
+    box-shadow:
+      0 0 0 1px var(--redact-ink),
+      1px 1px 0 rgba(0, 0, 0, 0.15);
+  }
+  .doc-content .redact-block {
+    color: var(--ink-dim);
+    font-style: italic;
+  }
+
+  /* === 별지 색인 (본문 하단, 단단 영역) === */
+  .doc-index {
+    margin: 32px 0 0 0;
+    padding: 14px 0 0 0;
+    border-top: 1px solid var(--ink-dim);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--ink-dim);
+  }
+  .doc-index h4 {
+    margin: 0 0 6px 0;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--ink-dim);
+    font-weight: 600;
+  }
+  .doc-index .index-rows {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px 24px;
+  }
+  .doc-index .index-rows .row {
+    display: flex;
+    border-bottom: 1px dotted var(--ink-dim);
+    padding: 1px 0;
+  }
+  .doc-index .index-rows .row .t {
+    flex: 1;
+  }
+  .doc-index .index-rows .row .p {
+    color: var(--ink-dim);
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 10px;
+  }
+
+  /* === 발급 사유·결재 라인 (문서 하단) === */
+  .doc-footer-meta {
+    margin-top: 32px;
+    padding: 14px 0 0 0;
+    border-top: 2px solid var(--ink);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 0;
+    font-size: 10px;
+    color: var(--ink-dim);
+    letter-spacing: 1px;
+  }
+  .doc-footer-meta .cell {
+    border-right: 1px solid var(--ink-dim);
+    padding: 6px 10px 24px 10px;
+    text-align: center;
+    position: relative;
+  }
+  .doc-footer-meta .cell:last-child {
+    border-right: none;
+  }
+  .doc-footer-meta .cell .label {
+    color: var(--ink-dim);
+    font-size: 9px;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .doc-footer-meta .cell .v {
+    color: var(--ink);
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+  /* 결재란의 작은 도장 흔적 */
+  .doc-footer-meta .cell .stamp-mark {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-6deg);
+    width: 28px;
+    height: 28px;
+    border: 1.5px solid var(--ink-stamp-red);
+    border-radius: 50%;
+    color: var(--ink-stamp-red);
+    font-size: 9px;
+    line-height: 26px;
+    text-align: center;
+    font-weight: 700;
+    opacity: 0.55;
+  }
+
+  /* === 페이지 푸터 (책상 아래) === */
+  .site-footer {
+    background: var(--bg-header-2);
+    color: var(--accent-cool-light);
+    padding: 14px 0 18px 0;
+    border-top: 1px solid #000000;
+    font-size: 11px;
+    margin-top: 16px;
+    position: relative;
+    z-index: 2;
+  }
+  .site-footer .inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .site-footer .links a {
+    color: var(--accent-cool-light);
+    text-decoration: none;
+    margin-right: 12px;
+  }
+  .site-footer .copyright { color: var(--accent-cool); }
+  .site-footer .dept { color: var(--accent-cool); }
+
+  /* === mockup 컨트롤 === */
+  .mockup-controls {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.6);
+    background: rgba(255, 255, 255, 0.92);
+    padding: 6px 10px;
+    border: 1px solid var(--border-dark);
+    z-index: 500;
+    line-height: 1.6;
+  }
+  .mockup-controls .head {
+    color: var(--fg-text);
+    font-weight: bold;
+    margin-bottom: 2px;
+  }
+  .mockup-controls a {
+    color: var(--fg-text);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--accent-cool);
+  }
+
+  /* === 모바일 반응형 === */
+  @media (max-width: 1023.98px) {
+    html, body { font-size: 13px; }
+
+    .site-header .inner {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      padding: 10px 14px;
+    }
+    .search-wrap { width: 100%; min-width: 0; }
+    .top-nav .inner { padding: 0 8px; overflow-x: auto; }
+    .top-nav .nav-item { padding: 0 14px; font-size: 12px; flex-shrink: 0; }
+
+    .page { padding: 0 12px; }
+
+    .doc-letterhead {
+      padding: 18px 20px 14px 20px;
+    }
+    .doc-letterhead .doc-no {
+      position: static;
+      text-align: left;
+      margin-bottom: 8px;
+    }
+    .doc-letterhead h1 { font-size: 24px; }
+    .doc-letterhead .org-formal { font-size: 11px; letter-spacing: 3px; }
+
+    /* 도장은 모바일에서 작게, 표제 아래로 흐름 */
+    .doc-stamps {
+      position: static;
+      transform: none;
+      justify-content: flex-end;
+      padding: 10px 20px 0 20px;
+      gap: 4px;
+    }
+    .doc-stamp { width: 48px; height: 48px; font-size: 8px; }
+
+    .doc-body { padding: 28px 20px 24px 20px; }
+    .doc-preamble { font-size: 12.5px; padding: 10px 0; }
+    .doc-preamble::before { letter-spacing: 3px; }
+
+    /* 2단 칼럼 → 1단 */
+    .doc-content {
+      column-count: 1;
+      column-gap: 0;
+      column-rule: none;
+    }
+    .doc-content p { font-size: 13px; }
+    .doc-content table { font-size: 11px; }
+
+    .doc-index .index-rows {
+      grid-template-columns: 1fr;
+    }
+
+    .doc-footer-meta {
+      grid-template-columns: 1fr 1fr;
+    }
+    .doc-footer-meta .cell:nth-child(2) {
+      border-right: none;
+    }
+
+    .site-footer .inner {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 0 14px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="vignette"></div>
+
+<!-- ============ 외피 ============ -->
+<header class="site-header">
+  <div class="inner">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <rect x="0" y="0" width="36" height="36" fill="#1f2730"/>
+        <rect x="2" y="2" width="32" height="32" fill="#2c333b"/>
+        <rect x="3" y="3" width="30" height="2" fill="#6e7c88"/>
+        <rect x="3" y="31" width="30" height="2" fill="#6e7c88"/>
+        <rect x="3" y="3" width="2" height="30" fill="#6e7c88"/>
+        <rect x="31" y="3" width="2" height="30" fill="#6e7c88"/>
+        <rect x="14" y="9" width="8" height="2" fill="#a8b4be"/>
+        <rect x="12" y="11" width="12" height="2" fill="#a8b4be"/>
+        <rect x="10" y="13" width="16" height="2" fill="#a8b4be"/>
+        <rect x="14" y="18" width="8" height="9" fill="#a8b4be"/>
+        <rect x="16" y="20" width="4" height="4" fill="#2c333b"/>
+      </svg>
+      <div class="brand-text">
+        <div class="org-en">ANOMALOUS PHENOMENA MANAGEMENT BUREAU</div>
+        <div class="org-ko">초상현상관리국</div>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <input type="text" placeholder="자료실 / 공지 / 용어 검색...">
+      <button class="search-btn">조회</button>
+    </div>
+  </div>
+</header>
+
+<nav class="top-nav">
+  <div class="inner">
+    <a class="nav-item active" href="#">본국 안내</a>
+    <a class="nav-item" href="#">직무 편람</a>
+    <a class="nav-item" href="#">자료실</a>
+    <a class="nav-item" href="#">공지</a>
+  </div>
+</nav>
+
+<main class="page">
+
+  <!-- 위치 경로 -->
+  <div class="breadcrumb">
+    <a href="dashboard.html">Top</a>
+    <span class="sep">›</span>
+    <a href="#">본국 안내</a>
+    <span class="sep">›</span>
+    <span class="current">본국 개요</span>
+  </div>
+
+  <!-- 접속자 — 한 줄 압축 -->
+  <div class="access-strip">
+    <span>IG / [mockup] 사용자명 / 세션 ig-pool-1437</span>
+    <span class="right">접속 2026-05-27 · 만료 2026-05-28 <span class="redact">██:██</span></span>
+  </div>
+
+  <!-- ============ 행정 문서 (인쇄 톤) ============ -->
+  <article class="paper">
+
+    <!-- 표제 영역 -->
+    <header class="doc-letterhead">
+      <div class="doc-no">
+        APMB-DOC-AB-0001<br>
+        Rev. 12 / 발급 2024-02-11<br>
+        갱신 2026-04-08
+      </div>
+      <div class="org-formal">초상현상관리국 본국 공지실</div>
+      <h1>본국 개요</h1>
+      <div class="subtitle">— 외부 인가 탐사자(IG 등급) 대상 공식 안내 자료 —</div>
+
+      <!-- 결재·검인 도장 (표제 우하단 떠 있는 듯) -->
+      <div class="doc-stamps">
+        <div class="doc-stamp">
+          <div class="top">검 인</div>
+          <div class="bot">관 리<br>행정부</div>
+        </div>
+        <div class="doc-stamp seal">
+          <div class="top">本</div>
+          <div class="bot">局印</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 본문 -->
+    <div class="doc-body">
+
+      <!-- 전문 (단단) -->
+      <p class="doc-preamble">
+        본 문서는 초상현상관리국(이하 *본국*)의 정체·설립 배경·운영 원칙을 임시 인가 외부 탐사자(IG 등급)에게 안내하기 위해 작성된 *공개 안내 자료*다.
+        본 문서의 모든 내용은 본국 관리 행정부가 정기적으로 검토·갱신하며, 시청자가 본국의 인트라넷·자료실·운영 절차에 접근하기 위한 *기본 인식 자료*에 해당한다.
+        본문의 일부 정보는 시청자의 인가 등급에 따라 검열되거나 별도 절차를 통해서만 열람할 수 있다.
+      </p>
+
+      <!-- 2단 칼럼 본문 -->
+      <div class="doc-content">
+
+        <section>
+          <h2><span class="num">第一章.</span>본국의 정체</h2>
+          <p>
+            <strong>초상현상관리국</strong>(Anomalous Phenomena Management Bureau)은 대한민국 정부의 비공개 외청으로, 일반 사회·과학 체계의 해석 범위를 벗어나는 *초상 현상*(이하 *사상체*)의 식별·조사·격리·관리를 단독 책임지는 기관이다.
+          </p>
+
+          <h3>주요 직무</h3>
+          <table>
+            <thead><tr><th>구분</th><th>직무 개요</th></tr></thead>
+            <tbody>
+              <tr><td><strong>식별</strong></td><td>사상체의 존재·위치 탐지·확인</td></tr>
+              <tr><td><strong>조사</strong></td><td>변칙 현상·활동 양상·잠재 위해도 평가</td></tr>
+              <tr><td><strong>격리</strong></td><td>본국 기준에 따라 안정적 통제 가능한 상태에 두는 직무</td></tr>
+              <tr><td><strong>관리</strong></td><td>격리된 사상체의 지속적 통제·추적·기록 보존</td></tr>
+            </tbody>
+          </table>
+
+          <h3>본국의 공식 위치</h3>
+          <p>
+            본국의 본부 소재지·세부 운영 시설의 위치는 본국 보안 정책에 의하여 <span class="redact">██████████</span> 처리된다.
+            본국 관련 행정 처리는 *관리 행정부 외부 인가 운영실*의 *대표 사서함*을 통하여 이루어진다.
+          </p>
+        </section>
+
+        <section>
+          <h2><span class="num">第二章.</span>설립 배경</h2>
+          <p>
+            본국은 사회 전반의 *비정형 현상*에 대한 정부 차원의 *단일 대응 창구*가 부재한 상황에서 설립되었다.
+            설립 이전 시기에는 비정형 현상에 대한 신고·조사·기록이 복수의 행정 부처에 분산되어 있었으며, 이로 인하여 기록의 단절·절차의 중복·책임 소재의 불분명이 다수 보고되었다.
+          </p>
+          <p>
+            본국의 설립은 위 문제의 *제도적 해소*를 목적으로 하며, 설립·운영의 법적 근거는 *설립 근거 법령*(§1-6)에 별도로 명시된다.
+          </p>
+          <p class="redact-block">
+            (이하 본국 연혁의 상세는 <em>§1-2 연혁</em>에 위임된다. 본 절은 *개요 차원의 안내*에 한정한다.)
+          </p>
+        </section>
+
+        <section>
+          <h2><span class="num">第三章.</span>조직 구조 개요</h2>
+          <p>
+            본국은 *4개 부서*로 구성되며, 각 부서는 본국의 직무 운영 일정에 따라 *수평적 권한 분담* 원칙하에 운영된다.
+            각 부서의 상세 직무·위계·운영 책임자 정보는 *조직 구성도*(§1-3)에서 다룬다.
+          </p>
+          <table>
+            <thead><tr><th>부서</th><th>주 책임 영역</th></tr></thead>
+            <tbody>
+              <tr><td><strong>현장 작전부</strong></td><td>현장 식별·확보·즉시 처분권</td></tr>
+              <tr><td><strong>보안 통제부</strong></td><td>격리 시설 운영·비상 대응</td></tr>
+              <tr><td><strong>연구 개발부</strong></td><td>분석·격리 절차 정의·평가</td></tr>
+              <tr><td><strong>관리 행정부</strong></td><td>본국 운영 전반·인사·외부 인가</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h2><span class="num">第四章.</span>외부 탐사자(IG 등급)에 대한 안내</h2>
+          <p>
+            본국은 사상체 관련 자료의 일부를 *외부 탐사자에게 임시 인가*하여 열람·기록·반응할 수 있도록 한다.
+            이를 위하여 부여되는 임시 권한 등급이 <strong>IG 등급</strong>(Investigator)이다.
+          </p>
+          <p>
+            IG 등급의 인가 범위·운영 정책·신청 절차의 상세는 *IG 등급 안내*(§2-B-3)에 위임된다.
+          </p>
+
+          <h3>본 문서의 위치</h3>
+          <p>
+            본 문서는 IG 등급 탐사자가 본국 인트라넷에 진입한 직후 가장 먼저 확인하는 *공식 안내 자료*로 운용되며, 본국이 어떠한 직무를 수행하는 기관인지에 대한 *최소한의 인식*을 제공함을 목적으로 한다.
+            본 문서가 다루지 아니하는 구체 절차·체계·자료는 모두 *직무 편람*과 *자료실*에 위임되어 있다.
+          </p>
+        </section>
+
+      </div>
+
+      <!-- 별지 색인 -->
+      <div class="doc-index">
+        <h4>관 련 항 목</h4>
+        <div class="index-rows">
+          <div class="row"><span class="t">연혁</span><span class="p">§1-2</span></div>
+          <div class="row"><span class="t">조직 구성도</span><span class="p">§1-3</span></div>
+          <div class="row"><span class="t">설립 근거 법령</span><span class="p">§1-6</span></div>
+          <div class="row"><span class="t">IG 등급 안내</span><span class="p">§2-B-3</span></div>
+          <div class="row"><span class="t">사상체 정의</span><span class="p">§2-A-1</span></div>
+          <div class="row"><span class="t">공통 수칙</span><span class="p">§2-C-1</span></div>
+        </div>
+      </div>
+
+      <!-- 결재 라인 -->
+      <div class="doc-footer-meta">
+        <div class="cell">
+          <div class="label">작 성</div>
+          <div class="v">관리 행정부</div>
+          <div class="stamp-mark">作</div>
+        </div>
+        <div class="cell">
+          <div class="label">검 토</div>
+          <div class="v">보안 통제부</div>
+          <div class="stamp-mark">檢</div>
+        </div>
+        <div class="cell">
+          <div class="label">승 인</div>
+          <div class="v">관리 행정부장</div>
+          <div class="stamp-mark">認</div>
+        </div>
+        <div class="cell">
+          <div class="label">발 효</div>
+          <div class="v">2026-04-08</div>
+        </div>
+      </div>
+
+    </div>
+  </article>
+
+</main>
+
+<footer class="site-footer">
+  <div class="inner">
+    <div class="dept">운영 · 관리 행정부 · 외부 인가 운영실</div>
+    <div class="links">
+      <a href="#">이용 약관</a>
+      <a href="#">개인정보 처리방침</a>
+      <a href="#">관리국 안내</a>
+    </div>
+    <div class="copyright">© APMB · 본 자료는 본국 내부 운영 기록으로 보존됨</div>
+  </div>
+</footer>
+
+<div class="mockup-controls">
+  <div class="head">[mockup] 본국 개요 v2 (인쇄 행정 문서 톤)</div>
+  <a href="about-intro.html">← v1 (디지털 행정 톤)</a><br>
+  <a href="dashboard.html">← 대시보드</a>
+</div>
+
+</body>
+</html>

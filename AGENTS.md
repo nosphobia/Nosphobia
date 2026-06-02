@@ -32,6 +32,9 @@
 - **`docs/raw/`** — (예정) 사용자 원자재 (사상체 컨셉·레퍼런스)
 - **`docs/working/<순서코드>/`** — (예정) 사상체 문서 작업 공간
 - **`infra/website/`** — 웹사이트 관련 (현재 구버전 React 자산 보관 중)
+- **`infra/website/planning/`** — 웹사이트 기획 문서들
+- **`infra/website/planning/작업_진행상태.md`** — 웹사이트 작업의 *현재 상태와 다음 작업* 추적. **웹사이트 관련 요청이 들어오면 본 문서를 먼저 읽어라.**
+- **`infra/website/mockup/`** — 웹사이트 mockup HTML (임시 확정 시각 결정의 보관소)
 - **`infra/tools/`** — (예정) 프로그램 도구 (TypeScript)
 
 ---

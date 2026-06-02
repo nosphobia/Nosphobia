@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APMB :: 본국 개요</title>
+<style>
+  :root {
+    /* === 관리국 시스템 레이어 컬러 (oath.html·dashboard.html 계승) === */
+    --bg-page:        #dde2e6;
+    --bg-paper:       #eef1f4;
+    --bg-paper-2:    #e4e8ec;
+    --bg-header:      #2c333b;
+    --bg-header-2:    #1f2730;
+    --fg-text:        #1a1f24;
+    --fg-text-dim:    #5a6470;
+    --fg-text-strong: #0a0e12;
+    --accent-cool:    #6e7c88;
+    --accent-cool-light: #a8b4be;
+    --border:         #a8b0b8;
+    --border-dark:    #6a7078;
+    --border-light:   #c4cad0;
+    --hover:          #d4d9de;
+    --redact-bg:      #1a1f24;
+
+    --scanline: rgba(0, 0, 0, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: var(--bg-page);
+    color: var(--fg-text);
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR',
+                 'MS Sans Serif', 'Tahoma', sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  body { overflow-x: hidden; }
+
+  /* === CRT (대폭 약화) === */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--scanline) 0,
+      var(--scanline) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.025 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+    z-index: 99;
+    opacity: 0.6;
+  }
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 101;
+    background: radial-gradient(ellipse 130% 130% at center, transparent 60%, rgba(0, 0, 0, 0.18) 100%);
+  }
+  @keyframes crt-flicker-light {
+    0%, 97%, 100% { opacity: 1; }
+    98% { opacity: 0.98; }
+  }
+  body { animation: crt-flicker-light 8s infinite; }
+
+  /* ==================== 사이트 헤더 (dashboard.html 계승) ==================== */
+  .site-header {
+    background: linear-gradient(180deg, var(--bg-header) 0%, var(--bg-header-2) 100%);
+    color: #ffffff;
+    border-bottom: 1px solid var(--border-dark);
+    position: relative;
+    z-index: 2;
+  }
+  .site-header .inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 14px 20px 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .site-header .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .site-header .logo { width: 36px; height: 36px; flex-shrink: 0; }
+  .site-header .brand-text { line-height: 1.2; }
+  .site-header .brand-text .org-en {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--accent-cool-light);
+    margin-bottom: 2px;
+  }
+  .site-header .brand-text .org-ko {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+  }
+
+  .search-wrap {
+    display: flex;
+    align-items: stretch;
+    height: 30px;
+    min-width: 280px;
+    background: #ffffff;
+    border: 1px solid var(--border-dark);
+    border-top-color: #000000;
+    border-left-color: #000000;
+  }
+  .search-wrap input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--fg-text);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 0 10px;
+  }
+  .search-wrap .search-btn {
+    background: linear-gradient(180deg, #d8dde2 0%, #b8bdc2 100%);
+    color: var(--fg-text-strong);
+    border: none;
+    border-left: 1px solid var(--border-dark);
+    padding: 0 14px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ==================== 상단 메뉴 ==================== */
+  .top-nav {
+    background: #4a525c;
+    border-bottom: 1px solid var(--bg-header-2);
+    position: relative;
+    z-index: 2;
+  }
+  .top-nav .inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: stretch;
+    height: 36px;
+  }
+  .top-nav .nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-right: 1px solid #3a424c;
+    border-left: 1px solid #5a626c;
+    text-decoration: none;
+  }
+  .top-nav .nav-item:first-child { border-left: none; }
+  .top-nav .nav-item:hover { background: var(--bg-header); }
+  .top-nav .nav-item.active { background: var(--bg-header-2); }
+  .top-nav .dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 200px;
+    background: var(--bg-paper);
+    border: 1px solid var(--border-dark);
+    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.25);
+    padding: 4px 0;
+    z-index: 50;
+  }
+  .top-nav .nav-item:hover .dropdown { display: block; }
+  .top-nav .dropdown a {
+    display: block;
+    padding: 7px 14px;
+    color: var(--fg-text);
+    font-size: 13px;
+    text-decoration: none;
+  }
+  .top-nav .dropdown a:hover { background: var(--accent-cool); color: #ffffff; }
+  .top-nav .dropdown a.current {
+    background: var(--bg-paper-2);
+    font-weight: 600;
+  }
+
+  /* ==================== 페이지 영역 ==================== */
+  .page {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 위치 경로 */
+  .breadcrumb {
+    padding: 8px 0;
+    color: var(--fg-text-dim);
+    font-size: 12px;
+  }
+  .breadcrumb a {
+    color: var(--fg-text-dim);
+    text-decoration: none;
+  }
+  .breadcrumb a:hover { color: var(--fg-text-strong); }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    color: var(--border);
+  }
+  .breadcrumb .current {
+    color: var(--fg-text-strong);
+  }
+
+  /* 접속자 정보 영역 */
+  .access-info {
+    background: var(--bg-paper);
+    border: 1px solid var(--border-dark);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-size: 12px;
+    color: var(--fg-text);
+    margin-bottom: 16px;
+  }
+  .access-info .label { color: var(--fg-text-dim); font-size: 11px; letter-spacing: 0.5px; }
+  .access-info .value { color: var(--fg-text-strong); font-weight: 500; }
+  .access-info .ig-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--bg-header);
+    color: #ffffff;
+    font-size: 10px;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .access-info .sep { color: var(--border); }
+  .access-info .redact-inline {
+    display: inline-block;
+    background: var(--redact-bg);
+    color: var(--redact-bg);
+    padding: 0 4px;
+    margin: 0 1px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    user-select: none;
+  }
+
+  /* ==================== 공용 문서 레이아웃 ==================== */
+  .doc-container {
+    display: grid;
+    grid-template-columns: minmax(0, 760px) 280px;
+    gap: 22px;
+    margin-bottom: 24px;
+    align-items: start;
+  }
+
+  /* === 문서 본체 (좌측) === */
+  .paper {
+    background: var(--bg-paper);
+    border: 1px solid var(--border-dark);
+    box-shadow:
+      0 1px 0 var(--border) inset,
+      0 0 0 1px var(--border) inset,
+      0 4px 12px rgba(0, 0, 0, 0.22);
+  }
+
+  /* 문서 표지 */
+  .paper-header {
+    background: linear-gradient(180deg, var(--bg-header) 0%, var(--bg-header-2) 100%);
+    color: #ffffff;
+    padding: 22px 28px 18px 28px;
+    border-bottom: 1px solid var(--border-dark);
+  }
+  .paper-header .org {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--accent-cool-light);
+    margin-bottom: 6px;
+  }
+  .paper-header h1 {
+    margin: 0 0 14px 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: #ffffff;
+  }
+  .paper-header .meta {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    gap: 6px 12px;
+    font-size: 12px;
+    color: var(--accent-cool-light);
+    line-height: 1.5;
+  }
+  .paper-header .meta .k { color: #ffffff; opacity: 0.65; }
+  .paper-header .meta .v { color: #ffffff; }
+  .paper-header .classification {
+    margin-top: 14px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent-cool-light);
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding-top: 10px;
+  }
+
+  /* 본문 영역 */
+  .paper-body {
+    padding: 28px 36px 32px 36px;
+  }
+
+  .preamble {
+    margin: 0 0 24px 0;
+    padding: 0 0 20px 0;
+    border-bottom: 1px dashed var(--border);
+    color: var(--fg-text);
+    text-align: justify;
+  }
+
+  /* === 섹션 헤더 단계 (공용 문서 레이아웃 정착) === */
+  .paper-body h2 {
+    margin: 28px 0 12px 0;
+    padding: 6px 0 6px 12px;
+    border-left: 4px solid var(--accent-cool);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--fg-text-strong);
+    letter-spacing: -0.3px;
+  }
+  .paper-body h2:first-child {
+    margin-top: 0;
+  }
+
+  .paper-body h3 {
+    margin: 20px 0 8px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--fg-text-strong);
+    letter-spacing: -0.2px;
+  }
+
+  .paper-body p {
+    margin: 0 0 12px 0;
+    text-align: justify;
+    color: var(--fg-text);
+  }
+
+  .paper-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 강조·키워드 — 행정 문서 톤 */
+  .paper-body strong {
+    color: var(--fg-text-strong);
+    font-weight: 700;
+  }
+  .paper-body em {
+    font-style: normal;
+    color: var(--fg-text-strong);
+    border-bottom: 1px dotted var(--accent-cool);
+    padding-bottom: 1px;
+  }
+
+  /* 본문 내 표 (작은 정보 묶음용) */
+  .paper-body .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 14px 0 16px 0;
+  }
+  .paper-body .doc-table th {
+    background: var(--bg-paper-2);
+    color: var(--fg-text-strong);
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 12px;
+    border: 1px solid var(--border-dark);
+    border-bottom-width: 2px;
+  }
+  .paper-body .doc-table td {
+    padding: 8px 12px;
+    border: 1px solid var(--border-light);
+    vertical-align: top;
+  }
+  .paper-body .doc-table tr:nth-child(even) td {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  /* 검열 표기 */
+  .redact {
+    display: inline-block;
+    background: var(--redact-bg);
+    color: var(--redact-bg);
+    padding: 0 2px;
+    margin: 0 1px;
+    user-select: none;
+  }
+  .redact-block {
+    color: var(--fg-text-dim);
+    font-style: italic;
+  }
+
+  /* 각주 */
+  .footnote {
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--fg-text-dim);
+    line-height: 1.6;
+  }
+
+  /* === 우측 사이드 === */
+  .sidebar {
+    position: sticky;
+    top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* 사이드 — 문서 정보 메타 */
+  .side-meta {
+    background: var(--bg-paper);
+    border: 1px solid var(--border-dark);
+    font-size: 12px;
+  }
+  .side-meta .head {
+    padding: 8px 12px;
+    background: linear-gradient(180deg, var(--bg-header) 0%, var(--bg-header-2) 100%);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .side-meta .body {
+    padding: 10px 12px;
+  }
+  .side-meta .row {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 4px 8px;
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+  .side-meta .row:last-child { margin-bottom: 0; }
+  .side-meta .row .k {
+    color: var(--fg-text-dim);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .side-meta .row .v {
+    color: var(--fg-text);
+    font-size: 12px;
+  }
+  .side-meta .row .v.code {
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 11px;
+  }
+
+  /* 사이드 — 목차 (TOC) */
+  .side-toc {
+    background: var(--bg-paper);
+    border: 1px solid var(--border-dark);
+    font-size: 12px;
+  }
+  .side-toc .head {
+    padding: 8px 12px;
+    background: var(--bg-paper-2);
+    color: var(--fg-text-dim);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+  }
+  .side-toc .body {
+    padding: 6px 0;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+  .side-toc a {
+    display: block;
+    padding: 5px 12px;
+    color: var(--fg-text);
+    text-decoration: none;
+    font-size: 12px;
+    line-height: 1.4;
+    border-left: 2px solid transparent;
+  }
+  .side-toc a:hover {
+    background: var(--hover);
+    border-left-color: var(--accent-cool);
+  }
+  .side-toc a.lv-2 {
+    font-weight: 500;
+  }
+  .side-toc a.lv-3 {
+    padding-left: 28px;
+    color: var(--fg-text-dim);
+    font-size: 11px;
+  }
+  .side-toc a.active {
+    background: var(--bg-paper-2);
+    color: var(--fg-text-strong);
+    border-left-color: var(--accent-cool);
+    font-weight: 600;
+  }
+
+  /* ==================== 푸터 ==================== */
+  .site-footer {
+    background: var(--bg-header-2);
+    color: var(--accent-cool-light);
+    padding: 18px 0 22px 0;
+    border-top: 1px solid #000000;
+    font-size: 11px;
+    margin-top: 16px;
+    position: relative;
+    z-index: 2;
+  }
+  .site-footer .inner {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .site-footer .links a {
+    color: var(--accent-cool-light);
+    text-decoration: none;
+    margin-right: 14px;
+  }
+  .site-footer .links a:hover { color: #ffffff; }
+  .site-footer .copyright { color: var(--accent-cool); font-size: 11px; }
+  .site-footer .dept { color: var(--accent-cool); font-size: 11px; }
+
+  /* ==================== mockup 컨트롤 ==================== */
+  .mockup-controls {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.6);
+    background: rgba(255, 255, 255, 0.92);
+    padding: 6px 10px;
+    border: 1px solid var(--border-dark);
+    z-index: 500;
+    user-select: none;
+    line-height: 1.6;
+  }
+  .mockup-controls .head {
+    color: var(--fg-text-strong);
+    font-weight: bold;
+    margin-bottom: 2px;
+  }
+  .mockup-controls a {
+    color: var(--fg-text);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--accent-cool);
+  }
+  .mockup-controls a:hover {
+    color: var(--fg-text-strong);
+    border-bottom-color: var(--fg-text-strong);
+  }
+
+  /* ==================== 모바일 반응형 (1024px 미만) ==================== */
+  @media (max-width: 1023.98px) {
+    html, body {
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* 헤더 — 세로 적층 */
+    .site-header .inner {
+      padding: 12px 14px 10px 14px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+    .search-wrap { min-width: 0; width: 100%; height: 32px; }
+
+    /* 상단 메뉴 — 가로 스크롤·드롭다운 비활성 */
+    .top-nav .inner {
+      padding: 0 4px;
+      height: 38px;
+      overflow-x: auto;
+    }
+    .top-nav .nav-item {
+      padding: 0 14px;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .top-nav .nav-item:hover .dropdown { display: none; }
+
+    .page { padding: 0 14px; }
+
+    .access-info {
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      padding: 10px 12px;
+      font-size: 11px;
+    }
+    .access-info .sep { display: none; }
+
+    /* === 문서 — 1단으로 무너지고 사이드는 본문 아래로 이동 === */
+    .doc-container {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .paper-header { padding: 18px 16px 14px 16px; }
+    .paper-header .org { font-size: 10px; letter-spacing: 2px; }
+    .paper-header h1 { font-size: 18px; margin-bottom: 12px; }
+    .paper-header .meta {
+      grid-template-columns: max-content 1fr;
+      gap: 4px 10px;
+      font-size: 11px;
+    }
+    .paper-header .classification {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      margin-top: 12px;
+      padding-top: 8px;
+    }
+
+    .paper-body { padding: 22px 18px 24px 18px; }
+    .paper-body h2 {
+      font-size: 16px;
+      padding: 4px 0 4px 10px;
+      border-left-width: 3px;
+    }
+    .paper-body h3 { font-size: 14px; }
+    .paper-body p { font-size: 13px; }
+    .paper-body .doc-table { font-size: 12px; }
+    .paper-body .doc-table th,
+    .paper-body .doc-table td {
+      padding: 6px 8px;
+    }
+    .footnote { font-size: 11px; }
+
+    /* 사이드 — sticky 해제, 본문 아래에 자연 흐름 */
+    .sidebar {
+      position: static;
+      top: auto;
+    }
+
+    /* 푸터 — 세로 적층 */
+    .site-footer { padding: 14px 0 18px 0; }
+    .site-footer .inner {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 0 14px;
+    }
+    .site-footer .links a { margin-right: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="vignette"></div>
+
+<!-- ============ 사이트 헤더 ============ -->
+<header class="site-header">
+  <div class="inner">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <rect x="0" y="0" width="36" height="36" fill="#1f2730"/>
+        <rect x="2" y="2" width="32" height="32" fill="#2c333b"/>
+        <rect x="3" y="3" width="30" height="2" fill="#6e7c88"/>
+        <rect x="3" y="31" width="30" height="2" fill="#6e7c88"/>
+        <rect x="3" y="3" width="2" height="30" fill="#6e7c88"/>
+        <rect x="31" y="3" width="2" height="30" fill="#6e7c88"/>
+        <rect x="14" y="9" width="8" height="2" fill="#a8b4be"/>
+        <rect x="12" y="11" width="12" height="2" fill="#a8b4be"/>
+        <rect x="10" y="13" width="16" height="2" fill="#a8b4be"/>
+        <rect x="14" y="18" width="8" height="9" fill="#a8b4be"/>
+        <rect x="16" y="20" width="4" height="4" fill="#2c333b"/>
+      </svg>
+      <div class="brand-text">
+        <div class="org-en">ANOMALOUS PHENOMENA MANAGEMENT BUREAU</div>
+        <div class="org-ko">초상현상관리국</div>
+      </div>
+    </div>
+    <div class="search-wrap">
+      <input type="text" placeholder="자료실 / 공지 / 용어 검색...">
+      <button class="search-btn">조회</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ 상단 메뉴 ============ -->
+<nav class="top-nav">
+  <div class="inner">
+    <a class="nav-item active" href="#">
+      본국 안내
+      <div class="dropdown">
+        <a href="#" class="current">본국 개요</a>
+        <a href="#">연혁</a>
+        <a href="#">조직 구성도</a>
+        <a href="#">지휘 체계</a>
+        <a href="#">본국 시설</a>
+        <a href="#">설립 근거 법령</a>
+      </div>
+    </a>
+    <a class="nav-item" href="#">
+      직무 편람
+      <div class="dropdown">
+        <a href="#">사상체 체계</a>
+        <a href="#">인사·권한 체계</a>
+        <a href="#">운영 지침</a>
+      </div>
+    </a>
+    <a class="nav-item" href="#">
+      자료실
+      <div class="dropdown">
+        <a href="#">사상체 일람</a>
+        <a href="#">용어집</a>
+        <a href="#">검열 표기 규약</a>
+      </div>
+    </a>
+    <a class="nav-item" href="#">
+      공지
+      <div class="dropdown">
+        <a href="#">일반 공지</a>
+        <a href="#">사건 보고</a>
+        <a href="#">인사 공지</a>
+      </div>
+    </a>
+  </div>
+</nav>
+
+<!-- ============ 페이지 본문 ============ -->
+<main class="page">
+
+  <!-- 위치 경로 -->
+  <div class="breadcrumb">
+    <a href="dashboard.html">Top</a>
+    <span class="sep">›</span>
+    <a href="#">본국 안내</a>
+    <span class="sep">›</span>
+    <span class="current">본국 개요</span>
+  </div>
+
+  <!-- 접속자 정보 -->
+  <div class="access-info">
+    <span class="ig-badge">IG</span>
+    <span class="value">[mockup] 사용자명</span>
+    <span class="sep">·</span>
+    <span class="label">접속일자</span>
+    <span class="value">2026-05-27</span>
+    <span class="sep">·</span>
+    <span class="label">인가 만료</span>
+    <span class="value">2026-05-28 <span class="redact-inline" aria-label="redacted">██:██</span></span>
+    <span class="sep">·</span>
+    <span class="label">세션</span>
+    <span class="value">ig-pool-1437</span>
+  </div>
+
+  <!-- ============ 문서 본체 + 사이드 ============ -->
+  <div class="doc-container">
+
+    <!-- 좌측 — 문서 본체 -->
+    <article class="paper">
+
+      <!-- 문서 표지 -->
+      <header class="paper-header">
+        <div class="org">APMB · 본국 안내 · 1-1</div>
+        <h1>본국 개요</h1>
+        <div class="meta">
+          <span class="k">문서 번호</span>
+          <span class="v">APMB-DOC-AB-0001 / Rev. 12</span>
+          <span class="k">발급일</span>
+          <span class="v">2024-02-11</span>
+          <span class="k">관리 부서</span>
+          <span class="v">관리 행정부 · 본국 공지실</span>
+          <span class="k">대상 등급</span>
+          <span class="v">전 등급 열람 가능</span>
+        </div>
+        <div class="classification">— 본 자료는 본국 내부 운영 기록으로 보존됨 —</div>
+      </header>
+
+      <!-- 본문 -->
+      <div class="paper-body">
+
+        <p class="preamble">
+          본 문서는 초상현상관리국(이하 *본국*)의 정체·설립 배경·운영 원칙을 임시 인가 외부 탐사자(IG 등급)에게 안내하기 위해 작성된 *공개 안내 자료*다.
+          본 문서의 모든 내용은 본국 관리 행정부가 정기적으로 검토·갱신하며, 시청자가 본국의 인트라넷·자료실·운영 절차에 접근하기 위한 *기본 인식 자료*에 해당한다.
+          본문의 일부 정보는 시청자의 인가 등급에 따라 검열되거나 별도 절차를 통해서만 열람할 수 있다.
+        </p>
+
+        <section>
+          <h2 id="sec-1">제 1 장. 본국의 정체</h2>
+
+          <p>
+            <strong>초상현상관리국</strong>(Anomalous Phenomena Management Bureau, 이하 *본국* 또는 *APMB*)은
+            대한민국 정부의 *비공개 외청*으로, 일반 사회·과학 체계의 해석 범위를 벗어나는 *초상 현상*(이하 *사상체*)의
+            식별·조사·격리·관리를 단독 책임지는 기관이다.
+          </p>
+
+          <h3>주요 직무</h3>
+
+          <p>본국이 수행하는 주요 직무는 다음과 같다.</p>
+
+          <table class="doc-table">
+            <thead>
+              <tr>
+                <th>구분</th>
+                <th>직무 개요</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>식별</strong></td>
+                <td>일반 사회·과학 체계의 해석 범위를 벗어나는 사상체의 존재 및 위치를 탐지·확인하는 직무.</td>
+              </tr>
+              <tr>
+                <td><strong>조사</strong></td>
+                <td>식별된 사상체의 변칙 현상·활동 양상·잠재 위해도를 평가하기 위한 일체의 조사 활동.</td>
+              </tr>
+              <tr>
+                <td><strong>격리</strong></td>
+                <td>본국이 지정한 기준에 따라 사상체를 안정적으로 통제 가능한 상태에 두는 직무. 격리의 형태·절차는 사상체의 성격에 따라 개별 결정된다.</td>
+              </tr>
+              <tr>
+                <td><strong>관리</strong></td>
+                <td>격리된 사상체의 *지속적 통제*·*변칙 현상 추적*·*유관 기록 보존*을 수행하는 직무.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>본국의 공식 위치</h3>
+
+          <p>
+            본국의 본부 소재지·세부 운영 시설의 위치는 본국 보안 정책에 의하여 <span class="redact" aria-label="redacted">██████████</span> 처리되며,
+            시청자의 인가 범위에 노출되지 아니한다. 본국 관련 우편·행정 처리는 <strong>관리 행정부 외부 인가 운영실</strong>의 *대표 사서함*을 통하여 이루어진다.
+          </p>
+        </section>
+
+        <section>
+          <h2 id="sec-2">제 2 장. 설립 배경</h2>
+
+          <p>
+            본국은 사회 전반에 *예외적으로 발생하는 비정형 현상*에 대한 정부 차원의 *단일 대응 창구*가 부재한 상황에서 설립되었다.
+            설립 이전 시기에는 비정형 현상에 대한 신고·조사·기록이 *복수의 행정 부처*에 분산되어 있었으며,
+            이로 인하여 *기록의 단절*·*절차의 중복*·*책임 소재의 불분명*이 다수 보고되었다.
+          </p>
+
+          <p>
+            본국의 설립은 위 문제의 *제도적 해소*를 목적으로 하며, 본국의 설립·운영의 법적 근거는 *설립 근거 법령*(본국 안내 §1-6)에 별도로 명시된다.
+          </p>
+
+          <p class="redact-block">
+            (이하 본국 연혁의 상세는 <em>본국 안내 §1-2 연혁</em>에 위임된다. 본 절은 *개요 차원의 안내*에 한정한다.)
+          </p>
+        </section>
+
+        <section>
+          <h2 id="sec-3">제 3 장. 조직 구조 개요</h2>
+
+          <p>
+            본국은 *4개 부서*로 구성되며, 각 부서는 본국의 직무 운영 일정에 따라 *수평적 권한 분담* 원칙하에 운영된다.
+            각 부서의 상세 직무·위계·운영 책임자 정보는 *조직 구성도*(본국 안내 §1-3)에서 다룬다.
+          </p>
+
+          <table class="doc-table">
+            <thead>
+              <tr>
+                <th>부서</th>
+                <th>주 책임 영역</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>현장 작전부</strong></td>
+                <td>사상체의 *현장 식별*·*확보*·*급박 시 즉시 처분권* 행사</td>
+              </tr>
+              <tr>
+                <td><strong>보안 통제부</strong></td>
+                <td>격리 시설 운영·비상 대응·보안 기록 보존</td>
+              </tr>
+              <tr>
+                <td><strong>연구 개발부</strong></td>
+                <td>사상체의 분석·격리 절차 정의·위험도 평가</td>
+              </tr>
+              <tr>
+                <td><strong>관리 행정부</strong></td>
+                <td>본국 운영 전반·인사·외부 인가 운영·기록 관리</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h2 id="sec-4">제 4 장. 외부 탐사자(IG 등급)에 대한 안내</h2>
+
+          <p>
+            본국은 사상체 관련 자료의 일부를 *외부 탐사자에게 임시 인가*하여 열람·기록·반응할 수 있도록 한다.
+            이를 위하여 부여되는 임시 권한 등급이 <strong>IG 등급</strong>(Investigator)이다.
+            IG 등급의 인가 범위·운영 정책·신청 절차의 상세는 *IG 등급 안내*(직무 편람 §2-B-3)에 위임된다.
+          </p>
+
+          <h3>본 문서의 위치</h3>
+
+          <p>
+            본 문서는 IG 등급 탐사자가 본국 인트라넷에 진입한 직후 가장 먼저 확인하는 *공식 안내 자료*로 운용되며,
+            본국이 사상체와 관련하여 어떠한 직무를 수행하는 기관인지에 대한 *최소한의 인식*을 제공함을 목적으로 한다.
+            본 문서가 다루지 아니하는 구체 절차·체계·자료는 모두 *직무 편람*과 *자료실*에 위임되어 있다.
+          </p>
+        </section>
+
+        <p class="footnote">
+          ※ 본 자료의 갱신 이력은 본국 관리 행정부 본국 공지실의 *기록 보존 일정*에 따라 정기 검토된다.
+          시청자는 본 자료의 *최신본*에 대한 열람만이 인가되며, *이전 판본*에 대한 비교·열람은 *본국 내부 절차*를 요한다.
+          본 문서의 *수정·삭제·인쇄·외부 게시*는 IG 등급의 인가 범위를 벗어나며, 본국에 의하여 추적·제한될 수 있다.
+        </p>
+
+      </div>
+    </article>
+
+    <!-- 우측 — 사이드 (문서 정보 메타 + 목차) -->
+    <aside class="sidebar">
+
+      <!-- 문서 정보 메타 -->
+      <div class="side-meta">
+        <div class="head">문서 정보</div>
+        <div class="body">
+          <div class="row">
+            <span class="k">작성일</span>
+            <span class="v">2024-02-11</span>
+          </div>
+          <div class="row">
+            <span class="k">갱신일</span>
+            <span class="v">2026-04-08</span>
+          </div>
+          <div class="row">
+            <span class="k">작성 부서</span>
+            <span class="v">관리 행정부 · 본국 공지실</span>
+          </div>
+          <div class="row">
+            <span class="k">관련 항목</span>
+            <span class="v">
+              <a href="#" style="color: var(--accent-cool); text-decoration: none;">§1-2 연혁</a><br>
+              <a href="#" style="color: var(--accent-cool); text-decoration: none;">§1-3 조직 구성도</a><br>
+              <a href="#" style="color: var(--accent-cool); text-decoration: none;">§1-6 설립 근거 법령</a><br>
+              <a href="#" style="color: var(--accent-cool); text-decoration: none;">§2-B-3 IG 등급 안내</a>
+            </span>
+          </div>
+          <div class="row">
+            <span class="k">문서번호</span>
+            <span class="v code">APMB-DOC-AB-0001</span>
+          </div>
+          <div class="row">
+            <span class="k">개정</span>
+            <span class="v code">Rev. 12</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 목차 -->
+      <nav class="side-toc">
+        <div class="head">목차</div>
+        <div class="body">
+          <a href="#sec-1" class="lv-2 active">제 1 장. 본국의 정체</a>
+          <a href="#sec-2" class="lv-2">제 2 장. 설립 배경</a>
+          <a href="#sec-3" class="lv-2">제 3 장. 조직 구조 개요</a>
+          <a href="#sec-4" class="lv-2">제 4 장. 외부 탐사자(IG 등급)에 대한 안내</a>
+        </div>
+      </nav>
+
+    </aside>
+
+  </div>
+
+</main>
+
+<!-- ============ 푸터 ============ -->
+<footer class="site-footer">
+  <div class="inner">
+    <div class="dept">운영 · 관리 행정부 · 외부 인가 운영실</div>
+    <div class="links">
+      <a href="#">이용 약관</a>
+      <a href="#">개인정보 처리방침</a>
+      <a href="#">관리국 안내</a>
+    </div>
+    <div class="copyright">© APMB · 본 자료는 본국 내부 운영 기록으로 보존됨</div>
+  </div>
+</footer>
+
+<!-- mockup 컨트롤 -->
+<div class="mockup-controls">
+  <div class="head">[mockup] 본국 개요 (1-1)</div>
+  <a href="dashboard.html">← 대시보드</a><br>
+  <a href="oath.html">← 서약서</a> · <a href="desktop.html">← 데스크탑</a>
+</div>
+
+<script>
+// ==================== 목차 활성 표시 (스크롤 위치 따라) ====================
+const tocLinks = document.querySelectorAll('.side-toc a');
+const sections = Array.from(document.querySelectorAll('.paper-body section[id], .paper-body h2[id]'))
+  .concat(Array.from(document.querySelectorAll('.paper-body h2'))
+    .filter((h) => h.id));
+
+// h2 자체에 id가 있으므로 h2 기반 추적
+const headings = Array.from(document.querySelectorAll('.paper-body h2[id]'));
+
+function updateActiveToc() {
+  let active = null;
+  const scrollY = window.scrollY + 120; // 헤더·메뉴 보정
+  for (const h of headings) {
+    if (h.offsetTop <= scrollY) {
+      active = h.id;
+    } else {
+      break;
+    }
+  }
+  tocLinks.forEach((a) => {
+    const href = a.getAttribute('href') || '';
+    if (href === '#' + active) {
+      a.classList.add('active');
+    } else {
+      a.classList.remove('active');
+    }
+  });
+}
+
+window.addEventListener('scroll', updateActiveToc, { passive: true });
+updateActiveToc();
+
+// 부드러운 스크롤
+tocLinks.forEach((a) => {
+  a.addEventListener('click', (e) => {
+    const href = a.getAttribute('href') || '';
+    if (href.startsWith('#')) {
+      e.preventDefault();
+      const target = document.querySelector(href);
+      if (target) {
+        const top = target.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+    }
+  });
+});
+</script>
+
+</body>
+</html>

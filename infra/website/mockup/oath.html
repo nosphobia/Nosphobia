@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APMB :: 보안 서약서</title>
+<style>
+  :root {
+    /* === 관리국 시스템 레이어 컬러 === */
+    --bg-page:        #dde2e6;     /* 차가운 종이 톤 배경 */
+    --bg-paper:       #eef1f4;     /* 문서 본체 (살짝 더 밝은 종이) */
+    --bg-header:      #2c333b;     /* 어두운 차가운 헤더 */
+    --bg-header-2:    #1f2730;     /* 헤더 더 어두운 변형 */
+    --fg-text:        #1a1f24;
+    --fg-text-dim:    #5a6470;
+    --fg-text-strong: #0a0e12;
+    --accent-cool:    #6e7c88;     /* 차가운 강조 */
+    --accent-cool-light: #a8b4be;
+    --border:         #a8b0b8;
+    --border-dark:    #6a7078;
+    --redact-bg:      #1a1f24;
+    --redact-fg:      #1a1f24;
+
+    /* CRT 효과 (약화) */
+    --scanline: rgba(0, 0, 0, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg-page);
+    color: var(--fg-text);
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR',
+                 'MS Sans Serif', 'Tahoma', sans-serif;
+    font-size: 14px;
+    line-height: 1.65;
+    overflow: hidden;
+  }
+
+  /* === CRT 효과 (관리국 레이어 — 대폭 약화) === */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--scanline) 0,
+      var(--scanline) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.025 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+    z-index: 99;
+    opacity: 0.6;
+  }
+
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 101;
+    background: radial-gradient(ellipse 130% 130% at center, transparent 60%, rgba(0, 0, 0, 0.18) 100%);
+  }
+
+  @keyframes crt-flicker-light {
+    0%, 97%, 100% { opacity: 1; }
+    98% { opacity: 0.98; }
+  }
+  body { animation: crt-flicker-light 8s infinite; }
+
+  /* ==================== 페이지 컨테이너 ==================== */
+  .container {
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 24px 24px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 스크롤 막대 — 행정 양식 톤 */
+  .container::-webkit-scrollbar {
+    width: 14px;
+  }
+  .container::-webkit-scrollbar-track {
+    background: var(--bg-page);
+    border-left: 1px solid var(--border);
+  }
+  .container::-webkit-scrollbar-thumb {
+    background: var(--accent-cool-light);
+    border: 1px solid var(--border-dark);
+  }
+  .container::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-cool);
+  }
+
+  /* ==================== 문서 본체 ==================== */
+  .paper {
+    width: 100%;
+    max-width: 760px;
+    background: var(--bg-paper);
+    border: 1px solid var(--border-dark);
+    box-shadow:
+      0 1px 0 var(--border) inset,
+      0 0 0 1px var(--border) inset,
+      0 4px 12px rgba(0, 0, 0, 0.22);
+  }
+
+  /* === 문서 표지 (어두운 차가운 헤더) === */
+  .paper-header {
+    background: linear-gradient(180deg, var(--bg-header) 0%, var(--bg-header-2) 100%);
+    color: #ffffff;
+    padding: 22px 28px 18px 28px;
+    border-bottom: 1px solid var(--border-dark);
+  }
+
+  .paper-header .org {
+    font-size: 12px;
+    letter-spacing: 4px;
+    color: var(--accent-cool-light);
+    margin-bottom: 6px;
+  }
+
+  .paper-header h1 {
+    margin: 0 0 14px 0;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0;
+    color: #ffffff;
+  }
+
+  .paper-header .meta {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    gap: 6px 12px;
+    font-size: 12px;
+    color: var(--accent-cool-light);
+    line-height: 1.5;
+    margin-top: 8px;
+  }
+
+  .paper-header .meta .k {
+    color: #ffffff;
+    opacity: 0.65;
+  }
+
+  .paper-header .meta .v {
+    color: #ffffff;
+  }
+
+  .paper-header .classification {
+    margin-top: 14px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--accent-cool-light);
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    padding-top: 10px;
+  }
+
+  /* === 본문 영역 === */
+  .paper-body {
+    padding: 28px 36px 32px 36px;
+    background: var(--bg-paper);
+  }
+
+  .preamble {
+    margin: 0 0 24px 0;
+    padding: 0 0 20px 0;
+    border-bottom: 1px dashed var(--border);
+    color: var(--fg-text);
+    text-align: justify;
+  }
+
+  .article {
+    margin-bottom: 22px;
+  }
+
+  .article h3 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--fg-text-strong);
+    letter-spacing: -0.2px;
+  }
+
+  .article p {
+    margin: 0;
+    text-align: justify;
+    color: var(--fg-text);
+  }
+
+  .article p + p {
+    margin-top: 8px;
+  }
+
+  /* === 검열 표기 === */
+  .redact {
+    display: inline-block;
+    background: var(--redact-bg);
+    color: var(--redact-fg);
+    padding: 0 2px;
+    margin: 0 1px;
+    user-select: none;
+  }
+
+  .redact-block {
+    color: var(--fg-text-dim);
+    font-style: italic;
+  }
+
+  /* === 각주 (닫힌 회로 한 줄) === */
+  .footnote {
+    margin-top: 28px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--fg-text-dim);
+    line-height: 1.5;
+    letter-spacing: -0.1px;
+  }
+
+  /* ==================== 동의 영역 ==================== */
+  .consent {
+    width: 100%;
+    max-width: 760px;
+    margin-top: 18px;
+    padding: 18px 24px;
+    background: var(--bg-paper);
+    border: 1px solid var(--border-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+  }
+
+  /* 스크롤이 끝에 도달하지 않은 상태에서 *체크박스 비활성* 표시 */
+  .consent.locked {
+    background: linear-gradient(180deg, var(--bg-paper) 0%, #e0e4e8 100%);
+  }
+
+  .consent .lock-notice {
+    display: none;
+    font-size: 12px;
+    color: var(--fg-text-dim);
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.04);
+    border-left: 3px solid var(--accent-cool);
+  }
+  .consent.locked .lock-notice { display: block; }
+
+  .consent label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    color: var(--fg-text);
+    line-height: 1.5;
+  }
+
+  .consent label.disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+
+  .consent input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 2px 0 0 0;
+    flex-shrink: 0;
+    cursor: inherit;
+  }
+
+  .consent .buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .btn {
+    min-width: 100px;
+    height: 32px;
+    padding: 0 16px;
+    background: linear-gradient(180deg, #f4f6f8 0%, #d8dde2 100%);
+    border-top:    1px solid #ffffff;
+    border-left:   1px solid #ffffff;
+    border-right:  1px solid var(--border-dark);
+    border-bottom: 1px solid var(--border-dark);
+    color: var(--fg-text);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .btn:active:not(:disabled) {
+    background: linear-gradient(180deg, #d8dde2 0%, #c4cad0 100%);
+    border-top:    1px solid var(--border-dark);
+    border-left:   1px solid var(--border-dark);
+    border-right:  1px solid #ffffff;
+    border-bottom: 1px solid #ffffff;
+  }
+  .btn:disabled {
+    color: var(--fg-text-dim);
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .btn-primary { color: var(--fg-text-strong); font-weight: 600; }
+
+  /* ==================== 호러 자리 ==================== */
+  /* 발급일이 5초 후 잠깐 다른 날짜로 깜빡 */
+  .blink-date.blinking {
+    animation: date-blink 0.18s steps(2) 1;
+  }
+  @keyframes date-blink {
+    0%   { color: var(--accent-cool-light); }
+    50%  { color: #ffffff; filter: invert(1); }
+    100% { color: var(--accent-cool-light); }
+  }
+
+  /* ==================== 모바일 반응형 (브레이크포인트 1024px) ==================== */
+  @media (max-width: 1023.98px) {
+    html, body {
+      font-size: 13px;
+      line-height: 1.7;        /* 정독 가독성 — 줄 간격 약간 늘림 */
+    }
+
+    .container {
+      padding: 20px 14px 18px 14px;
+    }
+
+    /* 문서 본체 — 모바일 폭에 자연스럽게 적응 */
+    .paper {
+      max-width: 100%;
+      box-shadow:
+        0 1px 0 var(--border) inset,
+        0 0 0 1px var(--border) inset,
+        0 2px 6px rgba(0, 0, 0, 0.18);
+    }
+
+    /* 문서 표지 */
+    .paper-header {
+      padding: 18px 16px 14px 16px;
+    }
+    .paper-header .org {
+      font-size: 10px;
+      letter-spacing: 2px;
+    }
+    .paper-header h1 {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    /* 메타 4행 — 2칼럼 → 1칼럼 (라벨/값 한 줄씩) */
+    .paper-header .meta {
+      grid-template-columns: max-content 1fr;
+      gap: 4px 10px;
+      font-size: 11px;
+    }
+    .paper-header .classification {
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      margin-top: 12px;
+      padding-top: 8px;
+    }
+
+    /* 본문 — 좌우 패딩 축소, 본문 max-width는 컨테이너에 위임 (640px 이하 자연 도달) */
+    .paper-body {
+      padding: 22px 18px 24px 18px;
+    }
+    .preamble {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      font-size: 13px;
+    }
+    .article {
+      margin-bottom: 20px;
+    }
+    .article h3 {
+      font-size: 14px;
+    }
+    .article p {
+      font-size: 13px;
+    }
+
+    /* 각주 */
+    .footnote {
+      font-size: 11px;
+      margin-top: 22px;
+      padding-top: 12px;
+    }
+
+    /* 동의 영역 */
+    .consent {
+      padding: 14px 16px;
+      margin-top: 14px;
+    }
+    .consent label {
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .consent input[type="checkbox"] {
+      width: 18px;
+      height: 18px;      /* 터치 타겟 확보 */
+    }
+    .consent .lock-notice {
+      font-size: 11px;
+    }
+    /* 버튼 — 세로 적층 + 풀폭 (모바일 표준 폼 패턴) */
+    .consent .buttons {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .btn {
+      width: 100%;
+      min-width: 0;
+      height: 40px;       /* 터치 타겟 확보 — Apple HIG 44pt 권장 근사치 */
+      font-size: 14px;
+    }
+  }
+
+  /* ==================== mockup 컨트롤 ==================== */
+  .mockup-controls {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    font-size: 11px;
+    color: rgba(0, 0, 0, 0.6);
+    background: rgba(255, 255, 255, 0.85);
+    padding: 6px 10px;
+    border: 1px solid var(--border-dark);
+    z-index: 500;
+    user-select: none;
+    line-height: 1.6;
+  }
+  .mockup-controls .head {
+    color: var(--fg-text-strong);
+    font-weight: bold;
+    margin-bottom: 2px;
+  }
+  .mockup-controls a {
+    color: var(--fg-text);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--accent-cool);
+  }
+  .mockup-controls a:hover {
+    color: var(--fg-text-strong);
+    border-bottom-color: var(--fg-text-strong);
+  }
+</style>
+</head>
+<body>
+
+<div class="vignette"></div>
+
+<div class="container" id="container">
+
+  <!-- ============ 문서 본체 ============ -->
+  <article class="paper">
+
+    <!-- 문서 표지 -->
+    <header class="paper-header">
+      <div class="org">APMB · ANOMALOUS PHENOMENA MANAGEMENT BUREAU</div>
+      <h1>탐사자 보안 서약서</h1>
+      <div class="meta">
+        <span class="k">문서 번호</span>
+        <span class="v">APMB-OATH-IG-0007 / Rev. 3</span>
+        <span class="k">발급일</span>
+        <span class="v"><span class="blink-date" id="issueDate">2026-04-19</span></span>
+        <span class="k">관리 부서</span>
+        <span class="v">관리 행정부 · 외부 인가 운영실</span>
+        <span class="k">대상 등급</span>
+        <span class="v">IG (Investigator, 임시 인가)</span>
+      </div>
+      <div class="classification">— CLASSIFIED · 본 서약은 본국 내부 운영 기록으로 보존됨 —</div>
+    </header>
+
+    <!-- 본문 -->
+    <div class="paper-body">
+
+      <p class="preamble">
+        본 서약서는 초상현상관리국(이하 “본국”)이 임시 인가한 외부 탐사자(IG 등급, 이하 “시청자”)가
+        본국의 인트라넷·자료실·관련 운영 절차에 접근함에 있어 준수하여야 할 의무를 명시한다.
+        시청자는 본 서약의 각 조항을 충분히 숙지한 후 본 문서 하단의 동의 절차를 거쳐야 하며,
+        동의 후에는 본국이 정한 운영 기준의 적용 대상이 된다.
+      </p>
+
+      <section class="article">
+        <h3>제 1 조 (서약의 목적)</h3>
+        <p>
+          본 서약은 시청자가 본국의 인가 범위 안에서 사상체 관련 자료를 열람·기록·논의함에 있어
+          정보의 유출·왜곡·임의 가공을 방지하고, 본국의 직무 운영 일정에 대한 외부 간섭을
+          최소화하기 위한 행정적 동의 절차이다. 본 서약은 시청자의 의사에 의하여 체결되며,
+          서약 이후 발생하는 모든 절차는 본국의 사전 통지 없이 본국의 결정에 따라 변경될 수 있다.
+        </p>
+      </section>
+
+      <section class="article">
+        <h3>제 2 조 (열람 범위와 권한의 한계)</h3>
+        <p>
+          시청자에게 부여되는 인가는 *임시 외부 인가*이며, 그 열람 범위는 본국이 사전 분류한
+          IG 등급 가시 자료에 한정된다. 본 등급에 부여되지 아니한 자료의 열람·복제·전송·인용은
+          엄격히 금지되며, 시청자가 자신에게 가시화되지 아니한 자료의 존재를 인지하거나 추론한
+          경우에도 그 추론의 외부 공유는 본 서약에 의하여 제한된다.
+        </p>
+      </section>
+
+      <section class="article">
+        <h3>제 3 조 (자료의 인용·재배포)</h3>
+        <p>
+          시청자는 본국 인트라넷의 자료를 외부 매체에 인용·재배포함에 있어 본국이 정한 인용 표기 규칙을
+          준수하여야 한다. 본 항의 위반이 본국에 의하여 확인되는 경우, 시청자의 인가는 즉시
+          정지될 수 있으며, 정지 후의 절차는 별도로 통지되지 아니한다.
+          본 조의 적용 사례·기준은 본국이 보유한 운영 매뉴얼에 따른다.
+        </p>
+      </section>
+
+      <section class="article">
+        <h3>제 4 조 (사상체와의 직접 접촉)</h3>
+        <p>
+          시청자가 본국이 인가한 사상체 송출 채널(이하 “송출 채널”)을 통해 사상체와 접촉할 경우,
+          시청자는 송출 채널 안에서 제공되는 안내·지침에 따라 행위하여야 한다.
+          사상체 본체와의 *직접* 접촉 시도, 본국의 통제를 우회한 접촉 시도, 사상체의 변칙성에
+          본인을 자발적으로 노출시키는 행위는 본 서약에 의하여 금지된다.
+          본 조항에 대한 위반의 결과는 <span class="redact" aria-label="redacted">████████</span>에
+          의하여 처리되며, 그 처리 시점은 <span class="redact-block">[기록 보류]</span>한다.
+        </p>
+      </section>
+
+      <section class="article">
+        <h3>제 5 조 (인지·정보 위해 발생 시 대응)</h3>
+        <p>
+          시청자가 본국 자료의 열람 또는 사상체와의 접촉 과정에서 신체적·인지적 이상 징후를 인지한 경우,
+          본국이 정한 보고 경로를 통하여 본 사실을 보고하여야 한다. 본국은 보고된 사례를 종합하여
+          시청자의 인가 유지 여부를 결정할 수 있으며, 본 결정은 시청자의 의사와 무관하게 적용된다.
+          본국은 본 결정의 기준·세부 절차·우선순위를 외부에 공개하지 아니한다.
+        </p>
+      </section>
+
+      <section class="article">
+        <h3>제 6 조 (인가의 유효 기간과 갱신)</h3>
+        <p>
+          본 인가의 유효 기간은 시청자의 마지막 활동 시점으로부터 24시간으로 한다.
+          시청자는 유효 기간 안에 재접속함으로써 본 인가를 자동 갱신할 수 있으며,
+          유효 기간 경과 후에는 본국이 정한 재인가 절차에 따라야 한다.
+          본 인가는 시청자의 신청에 의하여 발급된 *임시* 인가이며, 본국은 사전 통지 없이
+          본 인가를 정지·해제할 수 있다.
+        </p>
+      </section>
+
+      <section class="article">
+        <h3>제 7 조 (본 서약의 효력)</h3>
+        <p>
+          본 서약은 시청자가 본 문서 하단의 동의 절차를 완료한 시점부터 효력을 발한다.
+          서약의 효력은 시청자의 인가 유지 여부와 무관하게 본국이 정한 기록 보존 기간까지 유지되며,
+          본국은 본 서약의 조항을 단독으로 개정할 수 있다. 개정된 서약에 대한 재동의 요구는
+          시청자가 본국 인트라넷에 재접속하는 시점에 본국이 정한 방식으로 통지된다.
+          시청자는 본 서약의 개정에 동의하지 아니할 권리를 가지며, 본 권리의 행사는 본국에 의하여
+          시청자의 인가 해제로 처리된다.
+        </p>
+      </section>
+
+      <!-- 호러 자리 — 닫힌 회로 한 줄 -->
+      <p class="footnote">
+        ※ 본 서약은 시청자의 동의 여부와 무관하게 본국에 의하여 <span class="redact-block">[데이터 말소]</span>되며,
+        시청자의 *동의 거부* 행위 또한 본국의 기록 보존 대상에 포함된다.
+        본 각주의 사유는 본국 내부 운영 지침에 따른다.
+      </p>
+
+    </div>
+  </article>
+
+  <!-- ============ 동의 영역 ============ -->
+  <div class="consent locked" id="consent">
+    <div class="lock-notice" id="lockNotice">
+      ▸ 본 서약의 모든 조항을 끝까지 열람한 후 아래 항목을 진행할 수 있습니다.
+    </div>
+    <label id="consentLabel" class="disabled">
+      <input type="checkbox" id="consentCheckbox" disabled>
+      <span>본인은 본 서약서의 모든 조항을 열람·이해하였으며, 본국이 정한 운영 기준의 적용 대상이 됨에 동의합니다.</span>
+    </label>
+    <div class="buttons">
+      <button class="btn" id="rejectBtn">거부</button>
+      <button class="btn btn-primary" id="agreeBtn" disabled>동의</button>
+    </div>
+  </div>
+
+  <!-- 푸터 여백 -->
+  <div style="height: 16px;"></div>
+
+</div>
+
+<!-- mockup 컨트롤 -->
+<div class="mockup-controls">
+  <div class="head">[mockup] 보안 서약서</div>
+  <a href="desktop.html">← 데스크탑</a> ·
+  <a href="login.html">← 로그인</a><br>
+  <a href="dashboard.html">대시보드 →</a>
+</div>
+
+<script>
+// ==================== 스크롤 강제 ====================
+const container = document.getElementById('container');
+const consent = document.getElementById('consent');
+const consentCheckbox = document.getElementById('consentCheckbox');
+const consentLabel = document.getElementById('consentLabel');
+const agreeBtn = document.getElementById('agreeBtn');
+const rejectBtn = document.getElementById('rejectBtn');
+
+let scrolledToEnd = false;
+
+function checkScroll() {
+  if (scrolledToEnd) return;
+  // 스크롤 영역의 *문서 본체 끝*까지 도달했는지 — 동의 영역은 보이기 직전 시점 기준
+  // (스크롤 가능한 마지막 위치 - 동의 영역 높이) 까지 도달하면 활성
+  const scrollMax = container.scrollHeight - container.clientHeight;
+  if (container.scrollTop >= scrollMax - 4) {
+    scrolledToEnd = true;
+    unlockConsent();
+  }
+}
+
+function unlockConsent() {
+  consent.classList.remove('locked');
+  consentCheckbox.disabled = false;
+  consentLabel.classList.remove('disabled');
+}
+
+container.addEventListener('scroll', checkScroll);
+// 초기 로드 시 콘텐츠가 화면보다 작아 스크롤 불필요한 경우
+window.addEventListener('load', () => {
+  if (container.scrollHeight <= container.clientHeight + 4) {
+    scrolledToEnd = true;
+    unlockConsent();
+  }
+});
+
+// ==================== 체크박스 → 동의 버튼 활성 ====================
+consentCheckbox.addEventListener('change', () => {
+  agreeBtn.disabled = !consentCheckbox.checked;
+});
+
+// ==================== 동의·거부 ====================
+agreeBtn.addEventListener('click', () => {
+  // mockup: 다음 페이지 안내
+  alert('[mockup] 동의 완료. 메인 대시보드로 이동합니다.\n→ /  (dashboard.html)');
+});
+
+rejectBtn.addEventListener('click', () => {
+  alert('[mockup] 본 서약에 동의하지 아니하셨습니다.\n인가가 해제되며 로그인 페이지로 복귀합니다.\n→ /login  (login.html)');
+});
+
+// ==================== 호러: 발급일 미세 깜빡 ====================
+// 페이지 로드 5초 후 발급일이 잠깐 다른 날짜로 깜빡 (180ms)
+const issueDate = document.getElementById('issueDate');
+const originalDate = issueDate.textContent;
+const altDates = ['2026-04-██', '████-04-19', '2026-██-19', '[기록 보류]'];
+
+setTimeout(() => {
+  const alt = altDates[Math.floor(Math.random() * altDates.length)];
+  issueDate.classList.add('blinking');
+  issueDate.textContent = alt;
+  setTimeout(() => {
+    issueDate.textContent = originalDate;
+    issueDate.classList.remove('blinking');
+  }, 180);
+}, 5000 + Math.random() * 2000);
+</script>
+
+</body>
+</html>

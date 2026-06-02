@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APMB Intranet :: Access Gate</title>
+<style>
+  :root {
+    --bg: #000000;
+    --fg: #c8c8c8;
+    --fg-dim: #6a6a6a;
+    --accent: #e4e4e4;       /* APMB 상징색: 밝은 그레이. 남보라 #322659는 노스포비아 전용으로 분리 */
+    --warn: #d8c87a;
+    --crit: #d88a7a;
+    --scanline: rgba(255, 255, 255, 0.03);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', 'Source Code Pro',
+                 'D2Coding', 'Menlo', 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* === WebCore CRT 효과 3: 비네팅 === */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 101;
+    background:
+      radial-gradient(ellipse at center,
+        transparent 50%,
+        rgba(0, 0, 0, 0.45) 100%);
+  }
+
+  /* === WebCore CRT 효과 4: 천천히 흐르는 스캔 빔 === */
+  .scanbeam {
+    position: fixed;
+    left: 0;
+    right: 0;
+    height: 120px;
+    pointer-events: none;
+    z-index: 102;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(255, 255, 255, 0.025) 40%,
+      rgba(255, 255, 255, 0.045) 50%,
+      rgba(255, 255, 255, 0.025) 60%,
+      transparent 100%);
+    animation: scanbeam-fall 7s linear infinite;
+  }
+
+  @keyframes scanbeam-fall {
+    0%   { top: -120px; }
+    100% { top: 100vh; }
+  }
+
+  /* CRT 스캔라인 효과 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 2px,
+      var(--scanline) 2px,
+      var(--scanline) 3px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* 미세한 노이즈 텍스처 */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+    z-index: 99;
+    opacity: 0.5;
+    animation: noise 0.4s steps(3) infinite;
+  }
+
+  @keyframes noise {
+    0%   { transform: translate(0, 0); }
+    33%  { transform: translate(-1px, 1px); }
+    66%  { transform: translate(1px, -1px); }
+    100% { transform: translate(0, 0); }
+  }
+
+  /* 부팅 화면 컨테이너 */
+  .boot {
+    position: relative;
+    z-index: 1;
+    padding: 32px 40px;
+    height: 100vh;
+    overflow: hidden;          /* 화면 밖 로그는 잘림 — 부팅 화면 톤 */
+    text-shadow: 0 0 1px rgba(200, 200, 200, 0.5);
+  }
+
+  /* 로그 출력 영역 — 위에서 아래로 흘러내려가다 가득 차면 위쪽이 잘려나가는 형태 */
+  .boot-stream {
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.18s linear;
+  }
+
+  .boot-line {
+    white-space: pre;
+    opacity: 0;
+    flex-shrink: 0;
+  }
+
+  .boot-line.visible {
+    opacity: 1;
+  }
+
+  /* 색상 의미 — 부팅 로그 단계 */
+  .ok    { color: var(--fg); }
+  .info  { color: var(--fg-dim); }
+  .warn  { color: var(--warn); }
+  .crit  { color: var(--crit); }
+  .label { color: var(--accent); }
+
+  .tag-ok   { color: #88c878; }
+  .tag-info { color: var(--fg-dim); }
+  .tag-warn { color: var(--warn); }
+  .tag-crit { color: var(--crit); }
+
+  /* 진행 게이지 (마지막 단계) */
+  .gate {
+    margin-top: 16px;
+    color: var(--accent);
+    font-weight: bold;
+    letter-spacing: 0.5px;
+  }
+
+  /* 미세한 화면 전체 깜빡임 (CRT 느낌) */
+  @keyframes crt-flicker {
+    0%   { opacity: 1; }
+    97%  { opacity: 1; }
+    98%  { opacity: 0.92; }
+    100% { opacity: 1; }
+  }
+
+  .boot {
+    animation: crt-flicker 4s infinite;
+  }
+
+  /* === 호러 균열 (랜덤 발동) === */
+  .glitch-active .boot {
+    animation: glitch-shake 0.18s steps(3) 4;
+  }
+
+  @keyframes glitch-shake {
+    0%   { transform: translate(0, 0); filter: none; }
+    25%  { transform: translate(-3px, 1px); filter: brightness(1.3) invert(0.05); }
+    50%  { transform: translate(2px, -2px); filter: contrast(1.4) brightness(0.85); }
+    75%  { transform: translate(-1px, 2px); filter: invert(0.1); }
+    100% { transform: translate(0, 0); filter: none; }
+  }
+
+  .glitch-overlay {
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.06) 0,
+        rgba(255, 255, 255, 0.06) 1px,
+        transparent 1px,
+        transparent 4px
+      ),
+      linear-gradient(to bottom, transparent 40%, rgba(255, 255, 255, 0.15) 50%, transparent 60%);
+    pointer-events: none;
+    z-index: 101;
+    opacity: 0;
+    mix-blend-mode: screen;
+  }
+
+  .glitch-active .glitch-overlay {
+    animation: glitch-overlay-flash 0.7s ease-out 1;
+  }
+
+  @keyframes glitch-overlay-flash {
+    0%   { opacity: 0; transform: translateY(-100%); }
+    20%  { opacity: 1; transform: translateY(0); }
+    50%  { opacity: 0.8; transform: translateY(20%); }
+    100% { opacity: 0; transform: translateY(100%); }
+  }
+
+  /* 균열 시 잠시 모든 텍스트가 흐려짐 */
+  .glitch-active .boot-line.visible {
+    animation: line-jitter 0.15s steps(2) 3;
+  }
+
+  @keyframes line-jitter {
+    0%   { letter-spacing: 0; }
+    50%  { letter-spacing: 2px; opacity: 0.6; }
+    100% { letter-spacing: 0; }
+  }
+
+  /* 페이지 전환 페이드 (진입 완료 후) */
+  body.exiting .boot {
+    transition: opacity 0.8s ease-in;
+    opacity: 0;
+  }
+
+  /* ==================== 모바일 반응형 (브레이크포인트 1024px) ==================== */
+  @media (max-width: 1023.98px) {
+    html, body {
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .boot {
+      padding: 16px 14px;
+    }
+    /* 매우 긴 줄은 줄바꿈 허용 — 가독성 확보 */
+    .boot-line {
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    /* CRT 효과는 그대로 유지 (호러 톤 일관성) */
+  }
+
+  /* mockup 안내용 컨트롤 (실배포 시 제거) */
+  .mockup-controls {
+    position: fixed;
+    bottom: 8px;
+    right: 8px;
+    font-size: 11px;
+    color: var(--fg-dim);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 4px 8px;
+    border: 1px solid var(--fg-dim);
+    z-index: 200;
+    user-select: none;
+  }
+  .mockup-controls button {
+    background: transparent;
+    color: var(--fg-dim);
+    border: 1px solid var(--fg-dim);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    padding: 2px 6px;
+    margin-left: 4px;
+  }
+  .mockup-controls button:hover {
+    color: var(--fg);
+    border-color: var(--fg);
+  }
+</style>
+</head>
+<body>
+
+<div class="glitch-overlay"></div>
+<div class="vignette"></div>
+<div class="scanbeam"></div>
+
+<div class="boot">
+  <div class="boot-stream" id="stream"></div>
+</div>
+
+<!-- mockup 검토용 컨트롤. 실배포 시 제거. -->
+<div class="mockup-controls">
+  [mockup]
+  <button onclick="restart(false)">재생</button>
+  <button onclick="restart(true)">균열 강제 발생</button>
+</div>
+
+<script>
+// ---------- 부팅 로그 시퀀스 ----------
+// 하이브리드 톤 — 초반: 실제 시스템 부팅 메시지
+//                중반: APMB 가상 시스템 어휘로 전환
+//                후반: IG 등급 인가 게이트로 종료
+// 각 라인의 [delay] = 다음 라인까지 ms
+
+const lines = [
+  // ============================================================
+  // === Phase 1 — 워크스테이션 BIOS / OS 부팅 (실제 시스템 톤) ===
+  // ============================================================
+  { text: 'APMB-WS BIOS v3.21.4 — Copyright (c) 1998-2024 APMB Internal Systems', cls: 'info', tag: '', delay: 90 },
+  { text: 'CPU0 :: Intel(R) Xeon(R) Silver 4314 @ 2.40GHz × 16 cores detected', cls: 'info', tag: '', delay: 60 },
+  { text: 'Memory test :: 65536 MB OK', cls: 'info', tag: '', delay: 50 },
+  { text: 'Detecting storage devices...', cls: 'info', tag: '', delay: 70 },
+  { text: '  ATA0 :: SAMSUNG MZVL2512HCJQ-00B00 (512 GB, NVMe)', cls: 'info', tag: '', delay: 40 },
+  { text: '  ATA1 :: WDC WD20EFRX-68EUZN0 (2 TB, encrypted)', cls: 'info', tag: '', delay: 40 },
+  { text: 'Secure Boot :: enabled (signed by APMB-CA-2023)', cls: 'info', tag: '', delay: 60 },
+  { text: 'TPM 2.0 attestation :: passed', cls: 'info', tag: '', delay: 80 },
+  { text: 'Handing off to bootloader...', cls: 'info', tag: '', delay: 90 },
+  { text: '', cls: 'info', tag: '', delay: 40 },
+  { text: '[ OK ] Starting Kernel 5.15.92-apmb-hardened.x86_64', cls: 'ok', tag: 'ok', delay: 70 },
+  { text: '[ OK ] Command line: ro root=/dev/mapper/ws-root crashkernel=auto rd.lvm.lv=ws/swap audit=1 selinux=1 enforcing=1', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Initializing cgroup subsys cpuset, cpu, memory, devices, freezer, pids', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] x86/fpu :: Supporting XSAVE feature 0x002: \'SSE registers\'', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] ACPI :: Core revision 20210730', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] SMBIOS 3.4.0 present.', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] Mounted /dev/mapper/ws-root on /', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Mounted /dev/mapper/ws-home on /home (xfs, noatime, attr2, inode64)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Mounted /dev/mapper/ws-var on /var (xfs, noatime, logbufs=8)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Mounted tmpfs on /run (size=12939408k, mode=755)', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[INFO] Detected swap volume :: /dev/mapper/ws-swap (16 GB) — enabled', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Loaded module :: ext4 jbd2 mbcache crypto_simd cryptd ahci libahci nvme nvme_core', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Loaded module :: i915 drm_kms_helper ttm intel_pmc_core thermal cpufreq', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Loaded module :: snd_hda_intel snd_hda_codec snd_pcm snd_timer (audio subsystem stub)', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] Loaded module :: e1000e mii ptp tcp_bbr', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[INFO] systemd[1] :: starting Generic System Manager v249.7-1.apmb1', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[ OK ] Reached target Local File Systems', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] Reached target Swap', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] Reached target System Initialization', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Started Journal Service (journald, persistent mode, retention 365 days)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Started udev Kernel Device Manager', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] Started Login Service', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] Started D-Bus System Message Bus', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] Started Dynamic User Database (sssd → APMB-AD)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[INFO] hostname :: ws-rs-2147.security.intranet.apmb (internal designation SC-T2-2147)', cls: 'info', tag: 'info', delay: 70 },
+  { text: '[INFO] locale :: ko_KR.UTF-8 (primary), en_US.UTF-8 (secondary)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] timezone :: Asia/Seoul (UTC+09:00, NTP-synced)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Reached target Multi-User System', cls: 'ok', tag: 'ok', delay: 60 },
+
+  // ============================================================
+  // === Phase 2 — 보안·감사·네트워크 데몬 (정부 단말 분위기) ===
+  // ============================================================
+  { text: '[ OK ] Started Audit Subsystem (auditd, rules loaded: 412)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[INFO] auditd :: dispatcher /sbin/audisp-remote → log relay 10.42.7.4:60', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Started Cryptographic Service Daemon v2.4.1 (FIPS 140-3 compliant)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Loaded SELinux policy :: targeted (apmb-strict profile, MLS enabled)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Started Endpoint Integrity Monitor (file digest baseline: 184,221 entries)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO] EIM :: last full sweep 2026-05-25 23:11:48, no anomalies', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Started APMB Workstation Lockdown Profile (USB autorun: blocked, screen capture: audited)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Started Anti-Tamper Watchdog (hb interval: 15s)', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] Started Network Manager v1.40.0 (apmb-internal hardened profile)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO] eth0 :: link up @ 1000 Mbps, full duplex, MAC ██:██:██:██:██:7A', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] eth0 :: assigned 10.42.7.187/22 via DHCP (lease 86400s)', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO] gateway :: 10.42.4.1 (apmb-core-gw01.intranet.apmb)', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO] DNS primary :: 10.42.4.53 → intranet.apmb.go.kr resolved', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[INFO] DNS secondary :: 10.42.4.54 (failover, RTT 0.8 ms)', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[ OK ] Started Firewall (nftables, ruleset: apmb-ws-default, 1,247 rules)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Started VPN Tunnel (wg0 → core-gw01.intranet, peer fingerprint: 8c:42:e1:...)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO] wg0 :: handshake complete, latest persistent keepalive 25s', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Started Domain Bind Service (sssd, realm APMB.INTRANET)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[INFO] Kerberos TGT acquired :: principal host/ws-rs-2147@APMB.INTRANET (valid 10h)', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[ OK ] Started LDAP Replica Sync (read-only mirror of apmb-directory-01)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Started Time Sync (chronyd, drift -0.12 ms, source ntp.apmb.intranet)', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[ OK ] Started Print Service stub (apmb-print-proxy, jobs require KL countersign)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Started Mail Relay (apmb-mta, internal-only, no external SMTP egress)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Reached target Network is Online', cls: 'ok', tag: 'ok', delay: 70 },
+
+  // ============================================================
+  // === Phase 3 — APMB 인트라넷 접속 + 가상 어휘 모듈 ===
+  // ============================================================
+  { text: '', cls: 'info', tag: '', delay: 30 },
+  { text: '[INFO] Initiating handshake with APMB Intranet Core...', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[INFO] Endpoint :: intranet.apmb.go.kr:443 (resolved 10.42.4.7)', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO] TLS :: ClientHello sent (TLS 1.3, X25519+P-384 hybrid, ALPN h2)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] TLS :: ServerHello received (cipher TLS_AES_256_GCM_SHA384)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] TLS :: certificate chain validated → APMB Internal Root CA → Tier-1 Subordinate', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] TLS :: handshake complete, session ticket retained (24h)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] APMB Intranet Daemon initialized (apmb-intranetd v6.0.3-rc4)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO] Loading runtime configuration from /etc/apmb/intranet.d/...', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO]   · loaded 00-base.conf', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[INFO]   · loaded 10-clearance.conf', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[INFO]   · loaded 20-departments.conf', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[INFO]   · loaded 30-archive.conf', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[INFO]   · loaded 40-aether.conf', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[INFO]   · loaded 50-containment.conf', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[INFO]   · loaded 60-cognitohazard.conf', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[INFO]   · loaded 99-local-overrides.conf', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Clearance Registry online — synchronizing tier records...', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[INFO]   · CF tier (tier 1, general administration) .........  4,182 records', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO]   · RS tier (tier 2, direct entity contact) ..........  1,907 records', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO]   · SC tier (tier 3, senior clearance) ................   612 records', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO]   · TS tier (tier 4, department head / strategic) .....    84 records', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO]   · KL tier (tier 5, Kāla, single-holder) ............     1 record',  cls: 'info', tag: 'info', delay: 60 },
+  { text: '[INFO]   · IG tier (external temporary, Investigator) ........ dynamic pool', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Clearance Registry sync complete (total: 6,786 active principals)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Department directories mounted under /vault/dept/', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[INFO]   · /vault/dept/operations     (Field Operations Division)     — 28,412 documents', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO]   · /vault/dept/security       (Security Control Division)    — 41,907 documents', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO]   · /vault/dept/research       (Research & Development)       — 67,331 documents', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO]   · /vault/dept/administration (Management & Administration)  — 19,084 documents', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Aether Flux Monitor v6.0.3 online (sensors: 412 grid nodes)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO] Aether baseline :: 0.0412 μA·cm⁻² (nominal, σ=0.0008)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] Aether gradient map :: refreshed, last anomaly window 2026-05-19 03:47 UTC', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Containment Grid handshake established (gridctl v4.2.0)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[INFO] Active containment cells :: 2,341 / 2,400 (96 cells under maintenance)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] Cell density by risk tier :: Kṣ 412, Bh 1,049, Aj 718, Ni 144, Ka 18', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] Pulling cell heartbeat samples...', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO]   · Cell Bh-03-MT-1108 :: nominal', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[INFO]   · Cell Aj-02-AK-0274 :: nominal', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[WARN] Cell Aj-06-SP-0341 :: anomalous signal (within tolerance, t=+47s)', cls: 'warn', tag: 'warn', delay: 60 },
+  { text: '[INFO]   · Cell Ni-04-AH-0019 :: nominal', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[INFO]   · Cell Ka-05-EV-0002 :: nominal', cls: 'info', tag: 'info', delay: 30 },
+  { text: '[ OK ] Cell heartbeat sweep complete (2,341 / 2,341 responded)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Cognitohazard Filter Layer engaged (memetic dampening: stage 2)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO] CFL :: known memetic patterns blocked at proxy = 1,824', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] CFL :: cognitive load attenuator → 18% (user comfort profile: standard)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Memetic Buffer :: standby (last flush 2026-05-26 04:12:09)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Antimeme Index :: loaded (entries: redacted by design)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Document Vault mounted at /vault/archive (62,418 entities indexed)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO] Vault :: read-only for IG tier, write requires RS+countersign', cls: 'info', tag: 'info', delay: 50 },
+
+  // ============================================================
+  // === Phase 4 — 세션·캐시·디렉터리 동기화 ===
+  // ============================================================
+  { text: '', cls: 'info', tag: '', delay: 30 },
+  { text: '[INFO] Reconstructing user session state...', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[INFO] Last clean shutdown :: 2026-05-25 23:48:11 (uptime 16h 22m)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Restored desktop profile :: apmb-darkmode-3 (theme: intranet-standard)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Restored window layout :: 4 monitors (primary 2560×1440, aux 1920×1080×3)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Restored pinned applications :: file-browser, mail, document-viewer, terminal, report-tool', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO] Loaded recent documents cache (entries: 247, max: 500)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] Loaded search history (entries: 89, retention 30 days)', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[ OK ] Notification center initialized', cls: 'ok', tag: 'ok', delay: 40 },
+  { text: '[INFO]   · 3 unread internal memos (one TS-restricted, two CF-general)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO]   · 1 pending document review (RS countersign requested, deadline 2026-05-28)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[ OK ] Started Document Index Service (apmb-docindex, full-text shards: 7)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Started Citation Graph Service (apmb-citegraph, edges: 2.1M, vertices: 412K)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Started Cross-Reference Linter (apmb-xref, broken refs detected: 0)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Started Encrypted Clipboard Daemon (apmb-clipd, retention: 30s, audit: on)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Started Screen-Watermark Overlay (operator ID, machine ID, timestamp)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Started Anomaly Stream Listener (apmb-anomstream, subscribed to 4 channels)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO]   · channel \'aether-spike\' :: 0 events in last hour', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO]   · channel \'containment-breach\' :: 0 events in last 24h', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO]   · channel \'memetic-emergence\' :: 2 events in last 24h (both suppressed)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO]   · channel \'ig-traffic\' :: 14 active external sessions (current avg latency 41ms)', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[ OK ] Cache warm-up complete (working set: 4.2 GB resident)', cls: 'ok', tag: 'ok', delay: 60 },
+
+  // ============================================================
+  // === Phase 5 — 외부 세션 식별 + IG 임시 인가 게이트 ===
+  // ============================================================
+  { text: '', cls: 'info', tag: '', delay: 30 },
+  { text: '[INFO] Resolving incoming session origin...', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[INFO] Source :: external network (CHZZK-referrer chain detected, hop count 3)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] Geolocation :: KR / Seoul metropolitan area (provider tier: residential)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] Device fingerprint :: composite hash 0x8c42e1d7..b9 (new device)', cls: 'info', tag: 'info', delay: 50 },
+  { text: '[INFO] Tier request :: IG (Investigator, temporary external clearance)', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[ OK ] Risk assessment :: passed (no blacklist match, no anomalous referrer)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] IG provisional clearance gate available (slot reserved: ig-pool-1437)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO] Gate policy :: identifier + identifier-number required; valid for 24h on activity', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[INFO] Pre-gate handshake complete. Awaiting credentials from operator.', cls: 'info', tag: 'info', delay: 100 },
+  { text: '', cls: 'info', tag: '', delay: 50 },
+  { text: 'APMB Intranet :: Level IG entry point', cls: 'label', tag: '', delay: 80 },
+  { text: 'Provisional clearance gate :: ready', cls: 'label', tag: '', delay: 220 },
+  { text: '', cls: 'info', tag: '', delay: 50 },
+  { text: '> Transferring to credential verification...', cls: 'label', tag: '', delay: 700 }
+];
+
+// ====================================================================
+// 모바일 단축판 부팅 로그 (CLI 인트로 — 약 3~4초)
+// 5단 페이즈 구조는 유지하되 줄 수를 1/3로 축약. 노스 흔적·핵심 IG 게이트는 보존.
+// ====================================================================
+const linesMobile = [
+  // === Phase 1 — BIOS / OS 부팅 (3줄) ===
+  { text: 'APMB-WS BIOS v3.21.4 — boot started', cls: 'info', tag: '', delay: 70 },
+  { text: '[ OK ] Kernel loaded :: 5.15.92-apmb-hardened', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Mobile access profile :: SC-T2-M (mobile)', cls: 'ok', tag: 'ok', delay: 70 },
+
+  // === Phase 2 — 보안·네트워크 (3줄) ===
+  { text: '[ OK ] Auditd, SELinux, FW :: active', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[INFO] Network :: WAN handshake → apmb-core-gw01', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[ OK ] VPN tunnel :: established (mobile gateway)', cls: 'ok', tag: 'ok', delay: 60 },
+
+  // === Phase 3 — 인트라넷 + APMB 어휘 (10줄, 노스 흔적 1줄 포함) ===
+  { text: '[INFO] TLS 1.3 handshake :: intranet.apmb.go.kr', cls: 'info', tag: 'info', delay: 70 },
+  { text: '[ OK ] APMB Intranet Daemon online (v6.0.3-rc4)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[INFO] Clearance registry sync...', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[INFO]   · IG tier :: dynamic pool', cls: 'info', tag: 'info', delay: 40 },
+  { text: '[ OK ] Aether Flux Monitor :: nominal (σ=0.0008)', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Containment Grid handshake :: 2,341 cells', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[WARN] Cell Aj-06-SP-0341 :: anomalous signal (within tolerance)', cls: 'warn', tag: 'warn', delay: 70 },
+  { text: '[ OK ] Cognitohazard Filter Layer :: engaged', cls: 'ok', tag: 'ok', delay: 60 },
+  { text: '[ OK ] Document Vault mounted (IG read-only)', cls: 'ok', tag: 'ok', delay: 60 },
+
+  // === Phase 4 — 세션 동기화 (3줄) ===
+  { text: '[INFO] Session state reconstructed', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[ OK ] Anomaly stream listener :: subscribed (4 ch)', cls: 'ok', tag: 'ok', delay: 50 },
+  { text: '[ OK ] Cache warm-up complete', cls: 'ok', tag: 'ok', delay: 60 },
+
+  // === Phase 5 — IG 게이트 (6줄) ===
+  { text: '[INFO] Resolving incoming session (mobile)...', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[INFO] Source :: external network · device fingerprint new', cls: 'info', tag: 'info', delay: 60 },
+  { text: '[ OK ] IG provisional gate available', cls: 'ok', tag: 'ok', delay: 80 },
+  { text: '', cls: 'info', tag: '', delay: 40 },
+  { text: 'APMB Intranet :: Level IG entry point', cls: 'label', tag: '', delay: 80 },
+  { text: '> Transferring to credential verification...', cls: 'label', tag: '', delay: 600 }
+];
+
+// ---------- 렌더링 ----------
+const bootContainer = document.querySelector('.boot');
+const stream = document.getElementById('stream');
+
+function renderLine(line) {
+  const div = document.createElement('div');
+  div.className = 'boot-line';
+
+  if (line.tag) {
+    // 태그 부분과 본문 부분을 분리 — 태그만 색상 강조
+    const match = line.text.match(/^(\[[A-Z\s]+\])(.*)$/);
+    if (match) {
+      const tag = document.createElement('span');
+      tag.className = 'tag-' + line.tag;
+      tag.textContent = match[1];
+
+      const body = document.createElement('span');
+      body.className = line.cls;
+      body.textContent = match[2];
+
+      div.appendChild(tag);
+      div.appendChild(body);
+    } else {
+      div.textContent = line.text;
+      div.classList.add(line.cls);
+    }
+  } else {
+    div.textContent = line.text;
+    div.classList.add(line.cls);
+  }
+
+  stream.appendChild(div);
+  requestAnimationFrame(() => {
+    div.classList.add('visible');
+    // 가득 찼을 때 화면 위쪽으로 흘려보냄 — 부팅 화면 톤
+    const overflow = stream.getBoundingClientRect().bottom - bootContainer.getBoundingClientRect().bottom;
+    if (overflow > 0) {
+      const current = parseFloat(stream.dataset.offset || '0');
+      const next = current - overflow;
+      stream.dataset.offset = next;
+      stream.style.transform = `translateY(${next}px)`;
+    }
+  });
+}
+
+// ---------- 글리치 발동 (랜덤) ----------
+function maybeGlitch(forced = false) {
+  // 약 8% 확률. forced = true 시 무조건 발동 (mockup 검토용).
+  const fire = forced || Math.random() < 0.08;
+  if (!fire) return;
+
+  // 부팅 시퀀스 도중 적절한 시점 (1.5초 ~ 4초 사이)에서 1회 발생
+  const at = 1500 + Math.random() * 2500;
+  setTimeout(() => {
+    document.body.classList.add('glitch-active');
+    // 0.7초 후 회복
+    setTimeout(() => {
+      document.body.classList.remove('glitch-active');
+    }, 700);
+  }, at);
+}
+
+// ---------- 시퀀스 진행 ----------
+let running = false;
+
+// 화면 폭에 따라 PC/모바일 시퀀스 선택 (브레이크포인트 1024px)
+function pickSequence() {
+  return window.innerWidth < 1024 ? linesMobile : lines;
+}
+
+function playSequence() {
+  if (running) return;
+  running = true;
+
+  stream.innerHTML = '';
+  stream.style.transform = '';
+  stream.dataset.offset = '0';
+  document.body.classList.remove('exiting');
+
+  const seq = pickSequence();
+  let acc = 0;
+  seq.forEach((line) => {
+    setTimeout(() => renderLine(line), acc);
+    acc += line.delay;
+  });
+
+  // 마지막 라인 출력 후 전환 페이드
+  setTimeout(() => {
+    document.body.classList.add('exiting');
+    // 실제 환경에서는 여기서 location.href = '/login' 으로 전환.
+    // mockup에서는 그 자리에 게이트 메시지만 남김.
+    setTimeout(() => {
+      stream.innerHTML = '';
+      stream.style.transform = '';
+      stream.dataset.offset = '0';
+      const exit = document.createElement('div');
+      exit.className = 'gate boot-line visible';
+      exit.textContent = '[mockup] 다음 페이지 → /login (로그인 / 회원가입)';
+      stream.appendChild(exit);
+      bootContainer.style.opacity = '1';
+      running = false;
+    }, 900);
+  }, acc + 200);
+}
+
+function restart(forceGlitch) {
+  running = false;
+  document.body.classList.remove('glitch-active');
+  playSequence();
+  maybeGlitch(forceGlitch);
+}
+
+// 페이지 로드 시 자동 시작
+window.addEventListener('load', () => {
+  playSequence();
+  maybeGlitch(false);
+});
+</script>
+
+</body>
+</html>

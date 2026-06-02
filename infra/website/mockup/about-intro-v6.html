@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>APMB :: 본국 개요 (v6 — WebCore + Win98 그레이)</title>
+<style>
+  :root {
+    /* === Win98 시스템 그레이 팔레트 === */
+    --w-face:         #c0c0c0;        /* 창 본체 */
+    --w-light:        #dfdfdf;        /* 베벨 하이라이트 (top·left) */
+    --w-light-2:      #ffffff;
+    --w-shadow:       #808080;        /* 베벨 섀도우 (bottom·right) */
+    --w-shadow-2:     #404040;
+    --w-text:         #000000;
+    --w-text-dim:     #505050;
+    --w-text-disabled:#808080;
+
+    /* 타이틀바 — 옅은 회청 (관리국 상징색 톤) */
+    --title-bg:       #000080;        /* Win98 타이틀바 네이비 */
+    --title-bg-2:     #1084d0;        /* 그라데이션 우측 */
+    --title-fg:       #ffffff;
+    --title-inactive: #808080;
+    --title-inactive-fg: #c0c0c0;
+
+    /* 행정 강조 */
+    --link:           #0000ee;
+    --link-visited:   #551a8b;
+    --link-active:    #ee0000;
+
+    /* 호러 시그널 */
+    --signal-red:     #8b1818;
+    --signal-red-pale:rgba(139, 24, 24, 0.7);
+    --warn-yellow:    #b8860b;
+
+    /* 페이지 외피 */
+    --desktop:        #008080;        /* Win98 클래식 청록 데스크탑 */
+    --redact:         #000000;
+
+    --scanline:       rgba(0, 0, 0, 0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: var(--desktop);
+    color: var(--w-text);
+    font-family: 'MS Sans Serif', 'Microsoft Sans Serif', 'Tahoma', '굴림', 'Gulim', 'Apple SD Gothic Neo', sans-serif;
+    font-size: 12px;
+    line-height: 1.4;
+    /* 픽셀 렌더링 강제 */
+    -webkit-font-smoothing: subpixel-antialiased;
+    image-rendering: pixelated;
+  }
+  body { overflow-x: hidden; }
+
+  /* === CRT 효과 (스캔 빔 제외) === */
+  /* 1. 가로 스캔라인 */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 1px,
+      var(--scanline) 1px,
+      var(--scanline) 2px
+    );
+    pointer-events: none;
+    z-index: 100;
+    mix-blend-mode: multiply;
+  }
+
+  /* 2. 노이즈 */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+    z-index: 99;
+    opacity: 0.55;
+  }
+
+  /* 3. 비네팅 */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 101;
+    background: radial-gradient(ellipse 140% 140% at center, transparent 50%, rgba(0, 0, 0, 0.32) 100%);
+  }
+
+  /* 4. 색번짐 (RGB 서브픽셀) */
+  .aberration {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 98;
+    mix-blend-mode: screen;
+    background: repeating-linear-gradient(
+      to right,
+      rgba(255, 0, 0, 0.020) 0,
+      rgba(255, 0, 0, 0.020) 1px,
+      transparent 1px,
+      transparent 2px,
+      rgba(0, 255, 0, 0.015) 2px,
+      rgba(0, 255, 0, 0.015) 3px,
+      transparent 3px,
+      transparent 4px,
+      rgba(0, 100, 255, 0.020) 4px,
+      rgba(0, 100, 255, 0.020) 5px,
+      transparent 5px,
+      transparent 6px
+    );
+  }
+
+  /* 5. 깜빡임 */
+  @keyframes crt-flicker {
+    0%, 96%, 100% { opacity: 1; }
+    97% { opacity: 0.94; }
+    99% { opacity: 0.97; }
+  }
+  body { animation: crt-flicker 6s infinite; }
+
+  /* ==================== 베벨 유틸 ==================== */
+  .bevel-out {
+    border-top:    2px solid var(--w-light);
+    border-left:   2px solid var(--w-light);
+    border-right:  2px solid var(--w-shadow);
+    border-bottom: 2px solid var(--w-shadow);
+    box-shadow:
+      inset -1px -1px 0 var(--w-shadow-2),
+      inset  1px  1px 0 var(--w-light-2);
+  }
+  .bevel-in {
+    border-top:    2px solid var(--w-shadow);
+    border-left:   2px solid var(--w-shadow);
+    border-right:  2px solid var(--w-light);
+    border-bottom: 2px solid var(--w-light);
+    box-shadow:
+      inset  1px  1px 0 var(--w-shadow-2),
+      inset -1px -1px 0 var(--w-light-2);
+  }
+  .bevel-thin-in {
+    border-top:    1px solid var(--w-shadow);
+    border-left:   1px solid var(--w-shadow);
+    border-right:  1px solid var(--w-light);
+    border-bottom: 1px solid var(--w-light);
+  }
+
+  /* ==================== 페이지 외피 = Win98 창 ==================== */
+  .page-window {
+    max-width: 1280px;
+    margin: 16px auto;
+    background: var(--w-face);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 타이틀바 (페이지 = 큰 창) */
+  .page-titlebar {
+    background: linear-gradient(90deg, var(--title-bg) 0%, var(--title-bg-2) 100%);
+    color: var(--title-fg);
+    padding: 3px 4px 2px 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+  .page-titlebar .title-icon {
+    width: 16px;
+    height: 16px;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+  }
+  .page-titlebar .title-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .page-titlebar .controls {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .title-btn {
+    width: 16px;
+    height: 14px;
+    background: var(--w-face);
+    color: var(--w-text);
+    border-top:    1px solid var(--w-light);
+    border-left:   1px solid var(--w-light);
+    border-right:  1px solid var(--w-shadow);
+    border-bottom: 1px solid var(--w-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    image-rendering: pixelated;
+    font-family: inherit;
+    padding: 0;
+  }
+  .title-btn svg {
+    width: 8px;
+    height: 8px;
+  }
+
+  /* 메뉴바 (페이지 = 큰 창의 메뉴바) */
+  .page-menubar {
+    background: var(--w-face);
+    border-bottom: 1px solid var(--w-shadow);
+    padding: 2px 4px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-size: 11px;
+  }
+  .page-menubar .menu-item {
+    padding: 3px 8px;
+    color: var(--w-text);
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+  }
+  .page-menubar .menu-item:hover {
+    background: var(--title-bg);
+    color: var(--title-fg);
+  }
+  .page-menubar .menu-item .underline {
+    text-decoration: underline;
+  }
+  .page-menubar .menu-spacer {
+    flex: 1;
+  }
+  .page-menubar .menu-meta {
+    color: var(--w-text-dim);
+    font-size: 10px;
+    font-family: 'Fixedsys', 'Cascadia Code', 'Consolas', monospace;
+    padding-right: 6px;
+  }
+
+  /* === 도구 모음 (탐색 메뉴 4개) === */
+  .page-toolbar {
+    background: var(--w-face);
+    padding: 4px;
+    border-top: 1px solid var(--w-light);
+    border-bottom: 2px solid var(--w-shadow);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--w-face);
+    color: var(--w-text);
+    cursor: pointer;
+    font-size: 11px;
+    border: 2px solid transparent;
+  }
+  .tool-btn:hover {
+    border-top: 2px solid var(--w-light);
+    border-left: 2px solid var(--w-light);
+    border-right: 2px solid var(--w-shadow);
+    border-bottom: 2px solid var(--w-shadow);
+  }
+  .tool-btn.active {
+    border-top: 2px solid var(--w-shadow);
+    border-left: 2px solid var(--w-shadow);
+    border-right: 2px solid var(--w-light);
+    border-bottom: 2px solid var(--w-light);
+    background: linear-gradient(45deg, transparent 50%, rgba(0, 0, 0, 0.04) 50%);
+    background-size: 4px 4px;
+  }
+  .tool-btn .pix-icon {
+    width: 16px;
+    height: 16px;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+  }
+  .tool-btn .label {
+    color: var(--w-text);
+  }
+
+  .toolbar-sep {
+    width: 0;
+    height: 18px;
+    border-left: 1px solid var(--w-shadow);
+    border-right: 1px solid var(--w-light);
+    margin: 0 4px;
+  }
+
+  /* === 주소 표시줄 === */
+  .address-bar {
+    background: var(--w-face);
+    padding: 4px 6px 6px 6px;
+    border-bottom: 1px solid var(--w-shadow);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+  }
+  .address-bar .label {
+    color: var(--w-text-dim);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .address-bar .field {
+    flex: 1;
+    background: #ffffff;
+    padding: 2px 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--w-text);
+    font-family: 'Fixedsys', 'Cascadia Code', 'Consolas', monospace;
+    font-size: 11px;
+  }
+  .address-bar .field .pix-icon { width: 14px; height: 14px; image-rendering: pixelated; }
+  .address-bar .field .path { color: var(--w-text); }
+  .address-bar .field .path .crumb { color: var(--link); text-decoration: underline; }
+  .address-bar .field .path .sep { color: var(--w-text-dim); margin: 0 4px; }
+  .address-bar .field .path .current { color: var(--w-text); font-weight: 700; }
+  .address-bar .go-btn {
+    padding: 2px 12px;
+    background: var(--w-face);
+    color: var(--w-text);
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  /* ==================== 본문 영역 ==================== */
+  .page-body {
+    background: var(--w-face);
+    padding: 8px;
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr) 200px;
+    gap: 8px;
+  }
+
+  /* 좌측 — 색인 패널 */
+  .index-pane {
+    background: var(--w-face);
+    padding: 0;
+  }
+  .pane-title {
+    background: linear-gradient(90deg, var(--title-bg) 0%, var(--title-bg-2) 100%);
+    color: var(--title-fg);
+    padding: 3px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .pane-title .pix-icon {
+    width: 14px;
+    height: 14px;
+    image-rendering: pixelated;
+  }
+  .pane-body {
+    background: #ffffff;
+    padding: 6px;
+    font-size: 11px;
+    color: var(--w-text);
+  }
+
+  .index-pane .pane-body {
+    background: #ffffff;
+  }
+
+  .index-pane .group {
+    margin-bottom: 8px;
+  }
+  .index-pane .group .label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--w-text-dim);
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+    padding: 2px 4px;
+    background: var(--w-face);
+    display: block;
+  }
+  .index-pane a.idx {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 4px 1px 16px;
+    color: var(--link);
+    text-decoration: underline;
+    font-size: 11px;
+    line-height: 1.6;
+    position: relative;
+  }
+  .index-pane a.idx:visited { color: var(--link-visited); }
+  .index-pane a.idx:hover { background: var(--title-bg); color: var(--title-fg); }
+  .index-pane a.idx:hover .id { color: var(--title-inactive-fg); }
+  .index-pane a.idx::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: 5px;
+    width: 11px;
+    height: 11px;
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='11' shape-rendering='crispEdges'><rect x='1' y='1' width='8' height='9' fill='%23ffffff' stroke='%23000' stroke-width='0.5'/><rect x='2' y='3' width='5' height='1' fill='%23000'/><rect x='2' y='5' width='5' height='1' fill='%23000'/><rect x='2' y='7' width='4' height='1' fill='%23000'/></svg>") no-repeat;
+    image-rendering: pixelated;
+  }
+  .index-pane a.idx .id {
+    color: var(--w-text-dim);
+    font-family: 'Fixedsys', 'Cascadia Code', monospace;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+  .index-pane a.idx.active {
+    background: var(--title-bg);
+    color: var(--title-fg);
+    text-decoration: none;
+  }
+  .index-pane a.idx.active .id { color: var(--title-inactive-fg); }
+  .index-pane a.idx.locked {
+    color: var(--w-text-disabled);
+    text-decoration: line-through;
+  }
+  .index-pane a.idx.locked::before {
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='11' shape-rendering='crispEdges'><rect x='3' y='2' width='5' height='1' fill='%23404040'/><rect x='2' y='3' width='1' height='3' fill='%23404040'/><rect x='8' y='3' width='1' height='3' fill='%23404040'/><rect x='2' y='6' width='7' height='4' fill='%23808080'/><rect x='5' y='7' width='1' height='2' fill='%23000'/></svg>") no-repeat;
+  }
+
+  /* === 중앙 — 문서 본체 === */
+  .doc-pane {
+    background: #ffffff;
+  }
+  .doc-pane .pane-title .pix-icon { background: url(""); }
+
+  .doc-pane .pane-body {
+    background: #ffffff;
+    padding: 18px 24px 22px 24px;
+    color: var(--w-text);
+    font-size: 12px;
+    line-height: 1.65;
+  }
+
+  .doc-pane .pane-body h1.doc-title {
+    margin: 0 0 6px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--w-text);
+    letter-spacing: -0.3px;
+    padding: 4px 8px;
+    background: var(--w-face);
+    border-top:    1px solid var(--w-light);
+    border-left:   1px solid var(--w-light);
+    border-right:  1px solid var(--w-shadow);
+    border-bottom: 1px solid var(--w-shadow);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .doc-pane .pane-body h1.doc-title .pix-icon { width: 20px; height: 20px; }
+
+  /* 문서 메타 박스 (Win98 그룹박스 톤) */
+  .doc-meta-box {
+    margin: 14px 0 18px 0;
+    background: var(--w-face);
+    padding: 14px 14px 12px 14px;
+    position: relative;
+  }
+  .doc-meta-box .legend {
+    position: absolute;
+    top: -8px;
+    left: 10px;
+    background: var(--w-face);
+    padding: 0 6px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--w-text);
+    letter-spacing: 0.5px;
+  }
+  .doc-meta-box .grid {
+    display: grid;
+    grid-template-columns: auto 1fr auto 1fr;
+    gap: 4px 12px;
+    font-size: 11px;
+    color: var(--w-text);
+  }
+  .doc-meta-box .grid .k {
+    color: var(--w-text-dim);
+    font-weight: 700;
+  }
+  .doc-meta-box .grid .v {
+    color: var(--w-text);
+    font-family: 'Fixedsys', 'Cascadia Code', monospace;
+    font-size: 11px;
+  }
+
+  /* 도입부 */
+  .doc-preamble {
+    background: #ffffe1;       /* 메모지 노랑 — Win98 노트북 표시 톤 */
+    border-top:    1px solid #cccc99;
+    border-left:   1px solid #cccc99;
+    border-right:  1px solid #999966;
+    border-bottom: 1px solid #999966;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--w-text);
+    margin: 0 0 18px 0;
+    position: relative;
+  }
+  .doc-preamble::before {
+    content: '※';
+    position: absolute;
+    left: -2px;
+    top: -10px;
+    background: var(--w-face);
+    padding: 0 4px;
+    font-weight: 700;
+  }
+
+  /* 본문 단원 */
+  .doc-content section {
+    margin-bottom: 20px;
+  }
+  .doc-content h2 {
+    margin: 18px 0 8px 0;
+    background: linear-gradient(90deg, var(--title-bg) 0%, var(--title-bg-2) 100%);
+    color: var(--title-fg);
+    padding: 3px 8px 3px 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .doc-content h2 .pix-icon {
+    width: 12px;
+    height: 12px;
+  }
+  .doc-content h2 .num {
+    color: var(--title-inactive-fg);
+    font-family: 'Fixedsys', monospace;
+    margin-right: 4px;
+    font-size: 11px;
+  }
+  .doc-content h2:first-of-type { margin-top: 0; }
+
+  .doc-content h3 {
+    margin: 14px 0 6px 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--w-text);
+    background: var(--w-face);
+    padding: 2px 6px;
+    border-bottom: 1px solid var(--w-shadow);
+    display: inline-block;
+  }
+
+  .doc-content p {
+    margin: 0 0 10px 0;
+    color: var(--w-text);
+    text-align: justify;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  /* 강조 */
+  .doc-content strong {
+    font-weight: 700;
+    color: var(--w-text);
+  }
+  .doc-content em {
+    font-style: normal;
+    color: var(--w-text);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+  }
+
+  /* 하이퍼링크 — 파란 밑줄·방문 보라 (Win98 표준) */
+  a.xref {
+    color: var(--link);
+    text-decoration: underline;
+  }
+  a.xref:visited { color: var(--link-visited); }
+  a.xref:hover { color: var(--link-active); }
+  a.xref .id {
+    font-family: 'Fixedsys', 'Cascadia Code', monospace;
+    font-size: 11px;
+  }
+
+  /* 본문 표 */
+  .doc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    margin: 10px 0 14px 0;
+    background: #ffffff;
+  }
+  .doc-table th {
+    background: var(--w-face);
+    color: var(--w-text);
+    padding: 4px 8px;
+    border-top:    1px solid var(--w-light);
+    border-left:   1px solid var(--w-light);
+    border-right:  1px solid var(--w-shadow);
+    border-bottom: 1px solid var(--w-shadow);
+    text-align: left;
+    font-weight: 700;
+    font-size: 11px;
+  }
+  .doc-table td {
+    padding: 4px 8px;
+    border: 1px solid var(--w-shadow);
+    vertical-align: top;
+    line-height: 1.6;
+  }
+  .doc-table tr:nth-child(even) td {
+    background: #f8f8f8;
+  }
+
+  /* 검열 */
+  .redact-inline {
+    display: inline-block;
+    background: var(--redact);
+    color: var(--redact);
+    padding: 0 4px;
+    user-select: none;
+  }
+
+  /* === 우측 — 관련 패널 + 시스템 패널 === */
+  .side-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .side-pane .block .pane-body {
+    background: #ffffff;
+    padding: 6px;
+    font-size: 11px;
+  }
+
+  /* 관련 항목 — 파란 밑줄 링크 리스트 */
+  .related-list a {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    padding: 2px 4px;
+    color: var(--link);
+    text-decoration: underline;
+    font-size: 11px;
+    line-height: 1.6;
+  }
+  .related-list a:visited { color: var(--link-visited); }
+  .related-list a:hover { background: var(--title-bg); color: var(--title-fg); text-decoration: none; }
+  .related-list a:hover .id { color: var(--title-inactive-fg); }
+  .related-list a .id {
+    color: var(--w-text-dim);
+    font-family: 'Fixedsys', monospace;
+    font-size: 10px;
+    flex-shrink: 0;
+    min-width: 44px;
+  }
+
+  /* 시스템 정보 */
+  .sys-info .row {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 2px 6px;
+    margin-bottom: 4px;
+    line-height: 1.4;
+  }
+  .sys-info .row .k {
+    color: var(--w-text-dim);
+    font-size: 10px;
+    font-weight: 700;
+  }
+  .sys-info .row .v {
+    color: var(--w-text);
+    font-family: 'Fixedsys', 'Cascadia Code', monospace;
+    font-size: 10px;
+  }
+  .sys-info .row .v.warn { color: var(--warn-yellow); }
+
+  /* === 상태 표시줄 (창의 하단) === */
+  .page-statusbar {
+    background: var(--w-face);
+    padding: 3px 4px;
+    border-top: 1px solid var(--w-light);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-size: 10px;
+    color: var(--w-text);
+  }
+  .status-cell {
+    padding: 2px 8px;
+    border-top:    1px solid var(--w-shadow);
+    border-left:   1px solid var(--w-shadow);
+    border-right:  1px solid var(--w-light);
+    border-bottom: 1px solid var(--w-light);
+    margin-right: 2px;
+    font-family: 'Fixedsys', 'Cascadia Code', monospace;
+    font-size: 10px;
+    background: var(--w-face);
+  }
+  .status-cell.expand { flex: 1; }
+  .status-cell.redact {
+    background: var(--redact);
+    color: var(--redact);
+    user-select: none;
+  }
+
+  /* === Win98 시스템 다이얼로그 (호러 자리) === */
+  .float-dialog {
+    position: fixed;
+    top: 80px;
+    right: 16px;
+    width: 280px;
+    background: var(--w-face);
+    z-index: 200;
+    font-size: 11px;
+  }
+  .float-dialog .dialog-title {
+    background: linear-gradient(90deg, var(--signal-red) 0%, #b03c2c 100%);
+    color: var(--title-fg);
+    padding: 2px 4px;
+    font-weight: 700;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .float-dialog .dialog-title .pix-icon { width: 14px; height: 14px; }
+  .float-dialog .dialog-title .ctrls {
+    margin-left: auto;
+  }
+  .float-dialog .dialog-body {
+    padding: 12px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .float-dialog .dialog-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    image-rendering: pixelated;
+  }
+  .float-dialog .dialog-text {
+    flex: 1;
+    color: var(--w-text);
+    line-height: 1.5;
+    font-size: 11px;
+  }
+  .float-dialog .dialog-text .small {
+    color: var(--w-text-dim);
+    font-size: 10px;
+    margin-top: 6px;
+    font-family: 'Fixedsys', 'Cascadia Code', monospace;
+  }
+  .float-dialog .dialog-buttons {
+    padding: 0 12px 12px 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+  .dialog-btn {
+    min-width: 64px;
+    padding: 3px 12px;
+    background: var(--w-face);
+    color: var(--w-text);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  /* === 본문 내 비스듬한 검인 (호러 자리, 작게) === */
+  .body-stamp {
+    position: absolute;
+    top: 160px;
+    right: 36px;
+    width: 76px;
+    height: 76px;
+    border: 2px solid var(--signal-red);
+    border-radius: 50%;
+    color: var(--signal-red);
+    font-weight: 700;
+    transform: rotate(-10deg);
+    opacity: 0.42;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    font-family: serif;
+  }
+  .body-stamp::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid var(--signal-red);
+    border-radius: 50%;
+  }
+  .body-stamp .t1 { font-size: 8px; letter-spacing: 2px; margin-bottom: 2px; }
+  .body-stamp .t2 { font-size: 16px; }
+  .body-stamp .t3 { font-size: 7px; letter-spacing: 1px; margin-top: 2px; opacity: 0.7; }
+
+  /* === mockup 컨트롤 === */
+  .mockup-controls {
+    position: fixed;
+    top: 8px;
+    left: 8px;
+    background: var(--w-face);
+    padding: 4px 8px;
+    font-size: 11px;
+    z-index: 500;
+    line-height: 1.5;
+  }
+  .mockup-controls .head {
+    color: var(--w-text);
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .mockup-controls a {
+    color: var(--link);
+    text-decoration: underline;
+  }
+
+  /* === 모바일 === */
+  @media (max-width: 1023.98px) {
+    html, body { font-size: 12px; }
+
+    .page-window { margin: 6px; }
+
+    .page-titlebar { font-size: 10px; }
+
+    .page-menubar { flex-wrap: wrap; }
+    .page-menubar .menu-meta { display: none; }
+
+    .page-toolbar {
+      overflow-x: auto;
+      padding: 4px;
+    }
+    .tool-btn { flex-shrink: 0; }
+
+    .address-bar { flex-wrap: wrap; }
+    .address-bar .field { width: 100%; order: 3; }
+
+    .page-body {
+      grid-template-columns: minmax(0, 1fr);
+      padding: 6px;
+    }
+
+    .doc-pane .pane-body { padding: 14px 14px 18px 14px; }
+    .doc-pane .pane-body h1.doc-title { font-size: 16px; }
+
+    .doc-meta-box .grid {
+      grid-template-columns: auto 1fr;
+    }
+
+    .body-stamp {
+      top: 120px;
+      right: 8px;
+      width: 60px;
+      height: 60px;
+    }
+    .body-stamp .t2 { font-size: 12px; }
+
+    .page-statusbar {
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+
+    .float-dialog {
+      position: static;
+      width: auto;
+      margin: 6px;
+    }
+
+    .mockup-controls { font-size: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="aberration"></div>
+<div class="vignette"></div>
+
+<!-- ============ Win98 창 = 페이지 외피 ============ -->
+<div class="page-window">
+
+  <!-- 타이틀바 -->
+  <div class="page-titlebar bevel-out" style="border: 2px solid var(--title-bg-2); border-bottom: none;">
+    <svg class="title-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="0" y="0" width="16" height="16" fill="#1f2730"/>
+      <rect x="1" y="1" width="14" height="14" fill="#c0c0c0"/>
+      <rect x="6" y="3" width="4" height="2" fill="#000080"/>
+      <rect x="4" y="5" width="8" height="2" fill="#000080"/>
+      <rect x="3" y="7" width="10" height="6" fill="#000080"/>
+      <rect x="6" y="9" width="4" height="3" fill="#c0c0c0"/>
+    </svg>
+    <span class="title-text">APMB Intranet — 본국 개요 [APMB-DOC-AB-0001]</span>
+    <div class="controls">
+      <button class="title-btn" title="최소화">
+        <svg viewBox="0 0 8 8" shape-rendering="crispEdges"><rect x="1" y="6" width="6" height="1" fill="#000"/></svg>
+      </button>
+      <button class="title-btn" title="최대화">
+        <svg viewBox="0 0 8 8" shape-rendering="crispEdges"><rect x="1" y="1" width="6" height="1" fill="#000"/><rect x="1" y="1" width="1" height="6" fill="#000"/><rect x="6" y="1" width="1" height="6" fill="#000"/><rect x="1" y="6" width="6" height="1" fill="#000"/></svg>
+      </button>
+      <button class="title-btn" title="닫기">
+        <svg viewBox="0 0 8 8" shape-rendering="crispEdges">
+          <rect x="1" y="1" width="1" height="1" fill="#000"/><rect x="2" y="2" width="1" height="1" fill="#000"/><rect x="3" y="3" width="1" height="1" fill="#000"/><rect x="4" y="4" width="1" height="1" fill="#000"/><rect x="5" y="5" width="1" height="1" fill="#000"/><rect x="6" y="6" width="1" height="1" fill="#000"/>
+          <rect x="6" y="1" width="1" height="1" fill="#000"/><rect x="5" y="2" width="1" height="1" fill="#000"/><rect x="4" y="3" width="1" height="1" fill="#000"/><rect x="3" y="4" width="1" height="1" fill="#000"/><rect x="2" y="5" width="1" height="1" fill="#000"/><rect x="1" y="6" width="1" height="1" fill="#000"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- 메뉴바 -->
+  <div class="page-menubar">
+    <a class="menu-item" href="#"><span class="underline">파</span>일(F)</a>
+    <a class="menu-item" href="#"><span class="underline">편</span>집(E)</a>
+    <a class="menu-item" href="#"><span class="underline">보</span>기(V)</a>
+    <a class="menu-item" href="#"><span class="underline">즐</span>겨찾기(A)</a>
+    <a class="menu-item" href="#"><span class="underline">도</span>구(T)</a>
+    <a class="menu-item" href="#"><span class="underline">도</span>움말(H)</a>
+    <div class="menu-spacer"></div>
+    <div class="menu-meta">[mockup] APMB Intranet v6.0.3 — Build 1437</div>
+  </div>
+
+  <!-- 도구 모음 — 상단 탐색 메뉴 -->
+  <div class="page-toolbar">
+    <button class="tool-btn active">
+      <svg class="pix-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <rect x="2" y="3" width="12" height="10" fill="#000080"/>
+        <rect x="3" y="4" width="10" height="2" fill="#c0c0c0"/>
+        <rect x="3" y="7" width="10" height="5" fill="#dfdfdf"/>
+        <rect x="5" y="9" width="6" height="1" fill="#404040"/>
+        <rect x="5" y="11" width="4" height="1" fill="#404040"/>
+      </svg>
+      <span class="label">본국 안내</span>
+    </button>
+    <button class="tool-btn">
+      <svg class="pix-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <rect x="1" y="3" width="14" height="11" fill="#c0c0c0" stroke="#000" stroke-width="0.5"/>
+        <rect x="3" y="5" width="4" height="3" fill="#ffffff"/>
+        <rect x="9" y="5" width="4" height="3" fill="#ffffff"/>
+        <rect x="3" y="9" width="4" height="3" fill="#ffffff"/>
+        <rect x="9" y="9" width="4" height="3" fill="#ffffff"/>
+      </svg>
+      <span class="label">직무 편람</span>
+    </button>
+    <button class="tool-btn">
+      <svg class="pix-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <rect x="2" y="2" width="12" height="12" fill="#ffffff" stroke="#000" stroke-width="0.5"/>
+        <rect x="3" y="4" width="10" height="1" fill="#000080"/>
+        <rect x="3" y="6" width="10" height="1" fill="#404040"/>
+        <rect x="3" y="8" width="10" height="1" fill="#404040"/>
+        <rect x="3" y="10" width="6" height="1" fill="#404040"/>
+        <rect x="3" y="12" width="10" height="1" fill="#404040"/>
+      </svg>
+      <span class="label">자료실</span>
+    </button>
+    <button class="tool-btn">
+      <svg class="pix-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <rect x="2" y="2" width="12" height="9" fill="#ffffe1" stroke="#000" stroke-width="0.5"/>
+        <rect x="4" y="4" width="8" height="1" fill="#000"/>
+        <rect x="4" y="6" width="8" height="1" fill="#000"/>
+        <rect x="4" y="8" width="5" height="1" fill="#000"/>
+        <rect x="6" y="11" width="4" height="2" fill="#c0c0c0"/>
+        <rect x="5" y="13" width="6" height="1" fill="#000"/>
+      </svg>
+      <span class="label">공지</span>
+    </button>
+
+    <div class="toolbar-sep"></div>
+
+    <button class="tool-btn">
+      <svg class="pix-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <circle cx="7" cy="7" r="4" fill="none" stroke="#000" stroke-width="1.5"/>
+        <rect x="10" y="10" width="4" height="1" fill="#000" transform="rotate(45 12 11)"/>
+      </svg>
+      <span class="label">검색</span>
+    </button>
+
+    <button class="tool-btn">
+      <svg class="pix-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <rect x="3" y="3" width="10" height="10" fill="#c0c0c0" stroke="#000" stroke-width="0.5"/>
+        <rect x="5" y="5" width="6" height="6" fill="#000080"/>
+        <rect x="6" y="6" width="4" height="1" fill="#fff"/>
+      </svg>
+      <span class="label">즐겨찾기</span>
+    </button>
+  </div>
+
+  <!-- 주소 표시줄 -->
+  <div class="address-bar">
+    <span class="label">주소(D):</span>
+    <div class="field bevel-thin-in">
+      <svg class="pix-icon" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <rect x="2" y="1" width="9" height="12" fill="#ffffff" stroke="#000" stroke-width="0.5"/>
+        <rect x="3" y="3" width="6" height="1" fill="#404040"/>
+        <rect x="3" y="5" width="6" height="1" fill="#404040"/>
+        <rect x="3" y="7" width="5" height="1" fill="#404040"/>
+        <rect x="3" y="9" width="6" height="1" fill="#404040"/>
+        <rect x="3" y="11" width="3" height="1" fill="#404040"/>
+      </svg>
+      <span class="path">
+        <span class="crumb">VAULT://</span>
+        <span class="crumb">about</span>
+        <span class="sep">/</span>
+        <span class="current">intro</span>
+      </span>
+    </div>
+    <button class="go-btn bevel-out">이동</button>
+  </div>
+
+  <!-- ============ 본문 ============ -->
+  <div class="page-body">
+
+    <!-- 좌측 — 색인 패널 -->
+    <aside class="index-pane bevel-out">
+      <div class="pane-title">
+        <svg class="pix-icon" viewBox="0 0 14 14" shape-rendering="crispEdges"><rect x="2" y="2" width="10" height="10" fill="#c0c0c0" stroke="#000"/><rect x="3" y="4" width="8" height="1" fill="#000"/><rect x="3" y="6" width="8" height="1" fill="#000"/><rect x="3" y="8" width="6" height="1" fill="#000"/><rect x="3" y="10" width="8" height="1" fill="#000"/></svg>
+        <span>색 인</span>
+      </div>
+      <div class="pane-body">
+        <div class="group">
+          <span class="label">§ 1. 본국 안내</span>
+          <a href="#" class="idx active"><span class="id">1-1</span> 본국 개요</a>
+          <a href="#" class="idx"><span class="id">1-2</span> 연혁</a>
+          <a href="#" class="idx"><span class="id">1-3</span> 조직 구성도</a>
+          <a href="#" class="idx locked"><span class="id">1-4</span> 지휘 체계</a>
+          <a href="#" class="idx locked"><span class="id">1-5</span> 본국 시설</a>
+          <a href="#" class="idx"><span class="id">1-6</span> 설립 근거 법령</a>
+        </div>
+        <div class="group">
+          <span class="label">§ 2. 직무 편람</span>
+          <a href="#" class="idx"><span class="id">2-A</span> 사상체 체계</a>
+          <a href="#" class="idx"><span class="id">2-B</span> 인사·권한</a>
+          <a href="#" class="idx"><span class="id">2-C</span> 운영 지침</a>
+        </div>
+        <div class="group">
+          <span class="label">§ 3. 자료실</span>
+          <a href="#" class="idx"><span class="id">3-1</span> 사상체 일람</a>
+          <a href="#" class="idx"><span class="id">3-2</span> 용어집</a>
+          <a href="#" class="idx"><span class="id">3-3</span> 검열 표기 규약</a>
+        </div>
+        <div class="group">
+          <span class="label">§ 4. 공지</span>
+          <a href="#" class="idx"><span class="id">4-1</span> 일반 공지</a>
+          <a href="#" class="idx"><span class="id">4-2</span> 사건 보고</a>
+          <a href="#" class="idx"><span class="id">4-3</span> 인사 공지</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 중앙 — 문서 본체 -->
+    <article class="doc-pane bevel-out" style="position: relative;">
+      <div class="pane-title">
+        <svg class="pix-icon" viewBox="0 0 14 14" shape-rendering="crispEdges">
+          <rect x="2" y="1" width="9" height="12" fill="#ffffff" stroke="#000" stroke-width="0.5"/>
+          <rect x="3" y="3" width="6" height="1" fill="#404040"/>
+          <rect x="3" y="5" width="6" height="1" fill="#404040"/>
+          <rect x="3" y="7" width="5" height="1" fill="#404040"/>
+          <rect x="3" y="9" width="6" height="1" fill="#404040"/>
+        </svg>
+        <span>문 서 보 기 — APMB-DOC-AB-0001</span>
+      </div>
+      <div class="pane-body" style="position: relative;">
+
+        <!-- 본문 안 비스듬한 검인 (호러) -->
+        <div class="body-stamp">
+          <span class="t1">本 局</span>
+          <span class="t2">公 開</span>
+          <span class="t3">REV.12</span>
+        </div>
+
+        <!-- 문서 표제 -->
+        <h1 class="doc-title">
+          <svg class="pix-icon" viewBox="0 0 20 20" shape-rendering="crispEdges">
+            <rect x="3" y="2" width="13" height="16" fill="#ffffff" stroke="#000" stroke-width="0.5"/>
+            <rect x="4" y="4" width="11" height="1" fill="#000080"/>
+            <rect x="4" y="6" width="11" height="1" fill="#404040"/>
+            <rect x="4" y="8" width="11" height="1" fill="#404040"/>
+            <rect x="4" y="10" width="8" height="1" fill="#404040"/>
+            <rect x="4" y="12" width="11" height="1" fill="#404040"/>
+            <rect x="4" y="14" width="6" height="1" fill="#404040"/>
+          </svg>
+          본국 개요
+        </h1>
+
+        <!-- 메타 박스 (Win98 그룹박스) -->
+        <fieldset class="doc-meta-box bevel-thin-in">
+          <legend class="legend">— 문서 정보 —</legend>
+          <div class="grid">
+            <span class="k">문서 번호</span><span class="v">APMB-DOC-AB-0001</span>
+            <span class="k">개정</span><span class="v">Rev. 12</span>
+            <span class="k">발급일</span><span class="v">2024-02-11</span>
+            <span class="k">갱신일</span><span class="v">2026-04-08</span>
+            <span class="k">관리 부서</span><span class="v">관리 행정부 · 본국 공지실</span>
+            <span class="k">대상 등급</span><span class="v">전 등급 열람 가능</span>
+          </div>
+        </fieldset>
+
+        <!-- 도입부 -->
+        <div class="doc-preamble">
+          본 문서는 초상현상관리국(이하 <em>본국</em>)의 정체·설립 배경·운영 원칙을 임시 인가 외부 탐사자(IG 등급)에게 안내하기 위해 작성된 *공개 안내 자료*다.
+          본문의 일부 정보는 시청자의 인가 등급에 따라 검열되거나 별도 절차를 통해서만 열람할 수 있다.
+        </div>
+
+        <!-- 본문 -->
+        <div class="doc-content">
+
+          <section>
+            <h2>
+              <svg class="pix-icon" viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="1" y="1" width="10" height="10" fill="#000080"/><rect x="3" y="3" width="6" height="6" fill="#c0c0c0"/></svg>
+              <span class="num">[ 1 ]</span> 본국의 정체
+            </h2>
+            <p>
+              <strong>초상현상관리국</strong>(Anomalous Phenomena Management Bureau, 이하 *본국* 또는 *APMB*)은 대한민국 정부의 <em>비공개 외청</em>으로, 일반 사회·과학 체계의 해석 범위를 벗어나는 <em>초상 현상</em>(이하 *사상체*, <a class="xref" href="#"><span class="id">[§2-A-1]</span> 사상체 정의 참조</a>)의 식별·조사·격리·관리를 단독 책임지는 기관이다.
+            </p>
+
+            <h3>주요 직무</h3>
+            <table class="doc-table">
+              <thead><tr><th>구분</th><th>직무 개요</th></tr></thead>
+              <tbody>
+                <tr><td><strong>식별</strong></td><td>사상체의 존재·위치 탐지·확인</td></tr>
+                <tr><td><strong>조사</strong></td><td>변칙 현상·활동 양상·잠재 위해도 평가</td></tr>
+                <tr><td><strong>격리</strong></td><td>본국 기준에 따라 안정적 통제 가능한 상태에 두는 직무</td></tr>
+                <tr><td><strong>관리</strong></td><td>격리된 사상체의 지속적 통제·추적·기록 보존</td></tr>
+              </tbody>
+            </table>
+
+            <h3>본국의 공식 위치</h3>
+            <p>
+              본국의 본부 소재지·세부 운영 시설의 위치는 본국 보안 정책에 의하여 <span class="redact-inline">██████████</span> 처리되며, 시청자의 인가 범위에 노출되지 아니한다.
+            </p>
+          </section>
+
+          <section>
+            <h2>
+              <svg class="pix-icon" viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="1" y="1" width="10" height="10" fill="#000080"/><rect x="3" y="3" width="6" height="6" fill="#c0c0c0"/></svg>
+              <span class="num">[ 2 ]</span> 설립 배경
+            </h2>
+            <p>
+              본국은 사회 전반에 *예외적으로 발생하는 비정형 현상*에 대한 정부 차원의 *단일 대응 창구*가 부재한 상황에서 설립되었다.
+              설립 이전 시기에는 비정형 현상에 대한 신고·조사·기록이 *복수의 행정 부처*에 분산되어 있었으며, 이로 인하여 *기록의 단절*·*절차의 중복*·*책임 소재의 불분명*이 다수 보고되었다.
+            </p>
+            <p>
+              본국의 설립은 위 문제의 *제도적 해소*를 목적으로 하며, 본국의 설립·운영의 법적 근거는 <a class="xref" href="#"><span class="id">[§1-6]</span> 설립 근거 법령</a>에 별도로 명시된다.
+            </p>
+          </section>
+
+          <section>
+            <h2>
+              <svg class="pix-icon" viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="1" y="1" width="10" height="10" fill="#000080"/><rect x="3" y="3" width="6" height="6" fill="#c0c0c0"/></svg>
+              <span class="num">[ 3 ]</span> 조직 구조 개요
+            </h2>
+            <p>
+              본국은 *4개 부서*로 구성되며, 각 부서는 본국의 직무 운영 일정에 따라 *수평적 권한 분담* 원칙하에 운영된다.
+              각 부서의 상세 직무·위계·운영 책임자 정보는 <a class="xref" href="#"><span class="id">[§1-3]</span> 조직 구성도</a>에서 다룬다.
+            </p>
+            <table class="doc-table">
+              <thead><tr><th>부서</th><th>주 책임 영역</th></tr></thead>
+              <tbody>
+                <tr><td><strong>현장 작전부</strong></td><td>현장 식별·확보·급박 시 즉시 처분권</td></tr>
+                <tr><td><strong>보안 통제부</strong></td><td>격리 시설 운영·비상 대응·보안 기록 보존</td></tr>
+                <tr><td><strong>연구 개발부</strong></td><td>사상체 분석·격리 절차 정의·위험도 평가</td></tr>
+                <tr><td><strong>관리 행정부</strong></td><td>본국 운영 전반·인사·외부 인가 운영·기록 관리</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section>
+            <h2>
+              <svg class="pix-icon" viewBox="0 0 12 12" shape-rendering="crispEdges"><rect x="1" y="1" width="10" height="10" fill="#000080"/><rect x="3" y="3" width="6" height="6" fill="#c0c0c0"/></svg>
+              <span class="num">[ 4 ]</span> 외부 탐사자(IG 등급)에 대한 안내
+            </h2>
+            <p>
+              본국은 사상체 관련 자료의 일부를 *외부 탐사자에게 임시 인가*하여 열람·기록·반응할 수 있도록 한다.
+              이를 위하여 부여되는 임시 권한 등급이 <strong>IG 등급</strong>(Investigator)이다.
+              IG 등급의 인가 범위·운영 정책·신청 절차의 상세는 <a class="xref" href="#"><span class="id">[§2-B-3]</span> IG 등급 안내</a>에 위임된다.
+            </p>
+            <p>
+              본 문서는 IG 등급 탐사자가 본국 인트라넷에 진입한 직후 가장 먼저 확인하는 *공식 안내 자료*로 운용되며, 본국이 어떠한 직무를 수행하는 기관인지에 대한 *최소한의 인식*을 제공함을 목적으로 한다.
+            </p>
+          </section>
+
+        </div>
+
+      </div>
+    </article>
+
+    <!-- 우측 — 관련 + 시스템 -->
+    <aside class="side-pane">
+
+      <div class="block bevel-out">
+        <div class="pane-title">
+          <svg class="pix-icon" viewBox="0 0 14 14" shape-rendering="crispEdges">
+            <rect x="2" y="2" width="10" height="10" fill="#c0c0c0" stroke="#000" stroke-width="0.5"/>
+            <rect x="4" y="4" width="6" height="1" fill="#000080"/>
+            <rect x="4" y="6" width="6" height="1" fill="#000080"/>
+            <rect x="4" y="8" width="4" height="1" fill="#000080"/>
+          </svg>
+          <span>관 련 항 목</span>
+        </div>
+        <div class="pane-body related-list">
+          <a href="#"><span class="id">[§1-2]</span> 연혁</a>
+          <a href="#"><span class="id">[§1-3]</span> 조직 구성도</a>
+          <a href="#"><span class="id">[§1-6]</span> 설립 근거 법령</a>
+          <a href="#"><span class="id">[§2-A-1]</span> 사상체 정의</a>
+          <a href="#"><span class="id">[§2-B-3]</span> IG 등급 안내</a>
+          <a href="#"><span class="id">[§2-C-1]</span> 공통 수칙</a>
+        </div>
+      </div>
+
+      <div class="block bevel-out">
+        <div class="pane-title">
+          <svg class="pix-icon" viewBox="0 0 14 14" shape-rendering="crispEdges">
+            <rect x="2" y="3" width="10" height="8" fill="#000080" stroke="#000" stroke-width="0.5"/>
+            <rect x="3" y="4" width="8" height="6" fill="#c0c0c0"/>
+            <rect x="4" y="5" width="6" height="1" fill="#404040"/>
+            <rect x="4" y="7" width="6" height="1" fill="#404040"/>
+            <rect x="4" y="9" width="4" height="1" fill="#404040"/>
+          </svg>
+          <span>시 스 템 정 보</span>
+        </div>
+        <div class="pane-body sys-info">
+          <div class="row"><span class="k">상태</span><span class="v">활성</span></div>
+          <div class="row"><span class="k">검토</span><span class="v">정기</span></div>
+          <div class="row"><span class="k">분류</span><span class="v">공개 안내</span></div>
+          <div class="row"><span class="k">검색</span><span class="v">색인됨</span></div>
+          <div class="row"><span class="k">갱신</span><span class="v">2026-04-08</span></div>
+          <div class="row"><span class="k">차기 검토</span><span class="v warn">2026-08-08</span></div>
+          <div class="row"><span class="k">크기</span><span class="v">14.3 KB</span></div>
+          <div class="row"><span class="k">SHA-256</span><span class="v" style="word-break:break-all;">8c42e1d7b9a3...f2</span></div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <!-- 상태 표시줄 -->
+  <div class="page-statusbar">
+    <span class="status-cell expand">VAULT://about/intro · 읽기 전용 · IG 등급 열람 인가</span>
+    <span class="status-cell">[mockup] 사용자명</span>
+    <span class="status-cell">세션 ig-pool-1437</span>
+    <span class="status-cell">만료 2026-05-28</span>
+    <span class="status-cell redact">██:██</span>
+  </div>
+
+</div>
+
+<!-- ============ 호러 자리: Win98 시스템 다이얼로그 (적색 타이틀바) ============ -->
+<div class="float-dialog bevel-out">
+  <div class="dialog-title">
+    <svg class="pix-icon" viewBox="0 0 14 14" shape-rendering="crispEdges">
+      <polygon points="7,1 13,12 1,12" fill="#ffe14a" stroke="#000" stroke-width="0.5"/>
+      <rect x="6.5" y="5" width="1" height="4" fill="#000"/>
+      <rect x="6.5" y="10" width="1" height="1" fill="#000"/>
+    </svg>
+    <span>APMB 시스템 · 갱신 감지</span>
+    <span class="ctrls">
+      <button class="title-btn" title="닫기" onclick="this.closest('.float-dialog').style.display='none'">
+        <svg viewBox="0 0 8 8" shape-rendering="crispEdges">
+          <rect x="1" y="1" width="1" height="1" fill="#000"/><rect x="2" y="2" width="1" height="1" fill="#000"/><rect x="3" y="3" width="1" height="1" fill="#000"/><rect x="4" y="4" width="1" height="1" fill="#000"/><rect x="5" y="5" width="1" height="1" fill="#000"/><rect x="6" y="6" width="1" height="1" fill="#000"/>
+          <rect x="6" y="1" width="1" height="1" fill="#000"/><rect x="5" y="2" width="1" height="1" fill="#000"/><rect x="4" y="3" width="1" height="1" fill="#000"/><rect x="3" y="4" width="1" height="1" fill="#000"/><rect x="2" y="5" width="1" height="1" fill="#000"/><rect x="1" y="6" width="1" height="1" fill="#000"/>
+        </svg>
+      </button>
+    </span>
+  </div>
+  <div class="dialog-body">
+    <svg class="dialog-icon" viewBox="0 0 32 32" shape-rendering="crispEdges">
+      <polygon points="16,2 30,28 2,28" fill="#ffe14a" stroke="#000" stroke-width="1"/>
+      <rect x="15" y="11" width="2" height="10" fill="#000"/>
+      <rect x="15" y="23" width="2" height="2" fill="#000"/>
+    </svg>
+    <div class="dialog-text">
+      본 문서가 <strong>14:23:██</strong> 시점에 본국에 의해 갱신되었습니다.
+      <div class="small">출처 ████ · 차이 ████ 바이트<br>시청자의 열람 이력에 본 갱신이 기록됩니다.</div>
+    </div>
+  </div>
+  <div class="dialog-buttons">
+    <button class="dialog-btn bevel-out" onclick="this.closest('.float-dialog').style.display='none'">확인</button>
+    <button class="dialog-btn bevel-out" onclick="this.closest('.float-dialog').style.display='none'">상세</button>
+  </div>
+</div>
+
+<!-- mockup 컨트롤 -->
+<div class="mockup-controls bevel-out">
+  <div class="head">[mockup] 본국 개요 v6 (WebCore + Win98 그레이)</div>
+  <a href="about-intro.html">v1</a> ·
+  <a href="about-intro-v2.html">v2</a> ·
+  <a href="about-intro-v3.html">v3</a> ·
+  <a href="about-intro-v4.html">v4</a> ·
+  <a href="about-intro-v5.html">v5</a><br>
+  <a href="dashboard.html">대시보드</a>
+</div>
+
+</body>
+</html>

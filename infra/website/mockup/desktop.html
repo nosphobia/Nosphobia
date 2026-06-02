@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>APMB Workstation :: Desktop</title>
+<style>
+  :root {
+    /* === OS 레이어 컬러 === */
+    --bg-os: #0a0e12;
+    /* (구) Win98 청록 바탕 — 픽셀 XP Bliss로 교체됨. 토큰만 보존. */
+
+    /* === 차가운 그레이 (Win98 위젯) === */
+    --w-face:        #c8ccd0;   /* 다이얼로그·태스크바 본체 */
+    --w-face-light:  #e0e4e8;   /* 밝은 면 (탑·좌측 베벨) */
+    --w-face-dark:   #7a8088;   /* 어두운 면 (밑·우측 베벨) */
+    --w-face-darker: #3a4048;   /* 가장 어두운 베벨 라인 */
+    --w-text:        #0a0e12;   /* 본문 */
+    --w-text-dim:    #4a5058;   /* 보조 */
+    --w-title-bg:    #1f2d3a;   /* 다이얼로그 타이틀바 (차가운 톤) */
+    --w-title-fg:    #ffffff;
+
+    /* === 시스템 색 === */
+    --accent-cool:   #a8b4be;
+    --warn:          #d8c87a;
+    --crit:          #d88a7a;
+    --ok:            #88c878;
+
+    /* === 아이콘 텍스트 === */
+    --icon-text:     #ffffff;
+    --icon-text-shadow: rgba(0, 0, 0, 0.85);
+
+    /* === CRT === */
+    --scanline: rgba(255, 255, 255, 0.025);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR',
+                 'MS Sans Serif', 'Tahoma', 'Geneva', sans-serif;
+    font-size: 13px;
+    color: var(--w-text);
+    background: var(--bg-os);
+    user-select: none;
+  }
+
+  /* ==================== 바탕화면 — 픽셀 XP Bliss ==================== */
+  .desktop {
+    position: fixed;
+    inset: 0 0 32px 0;   /* 태스크바 32px 제외 */
+    overflow: hidden;
+    background-image: url('assets/desktop-wallpaper-bliss-pixel.png');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    /* 픽셀 아트 보존 — 브라우저가 자체적으로 부드럽게 보간하지 않도록 */
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    /* 채도 살짝 감쇠 — Win98 시기 옛 모니터 톤. 위젯·다이얼로그는 영향 없음. */
+    filter: saturate(0.82);
+  }
+
+  /* === CRT 효과 1: 촘촘한 스캔라인 (강화 — 1px 간격, multiply 블렌딩) === */
+  .desktop::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.22) 0,
+      rgba(0, 0, 0, 0.22) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 3;
+    mix-blend-mode: multiply;
+  }
+
+  /* === CRT 효과 2: 미세 노이즈 === */
+  .desktop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.55;
+  }
+
+  /* === CRT 효과 3: 색번짐 (서브픽셀 RGB 분리) — 전체 화면 미세하게 === */
+  .crt-aberration {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 48;
+    mix-blend-mode: screen;
+    background: repeating-linear-gradient(
+      to right,
+      rgba(255, 0, 0, 0.025) 0,
+      rgba(255, 0, 0, 0.025) 1px,
+      transparent 1px,
+      transparent 2px,
+      rgba(0, 255, 0, 0.020) 2px,
+      rgba(0, 255, 0, 0.020) 3px,
+      transparent 3px,
+      transparent 4px,
+      rgba(0, 100, 255, 0.025) 4px,
+      rgba(0, 100, 255, 0.025) 5px,
+      transparent 5px,
+      transparent 6px
+    );
+  }
+
+  /* === CRT 효과 4: 비네팅 (강화) === */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    background: radial-gradient(ellipse 130% 130% at center, transparent 48%, rgba(0, 0, 0, 0.55) 100%);
+  }
+
+  /* === CRT 효과 5: 화면 굴곡감 (튜브 끝부분 라운드 + 가장자리 그림자) === */
+  .crt-curvature {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 49;
+    background:
+      radial-gradient(ellipse 110% 100% at 50% 50%, transparent 70%, rgba(0, 0, 0, 0.22) 100%),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.18) 0%, transparent 8%, transparent 92%, rgba(0, 0, 0, 0.18) 100%);
+    box-shadow:
+      inset 0 0 60px 10px rgba(0, 0, 0, 0.35),
+      inset 0 0 200px 40px rgba(0, 0, 0, 0.18);
+    border-radius: 16px;
+  }
+
+  /* === CRT 효과 6: 미세 깜빡임 === */
+  @keyframes crt-flicker {
+    0%, 96%, 100% { opacity: 1; }
+    97% { opacity: 0.94; }
+    99% { opacity: 0.97; }
+  }
+  body { animation: crt-flicker 6s infinite; }
+
+  /* ==================== 데스크탑 아이콘 ==================== */
+  .icons {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 10;
+  }
+
+  .icon {
+    width: 92px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    border: 1px dotted transparent;
+  }
+
+  .icon.selected {
+    background: rgba(20, 50, 100, 0.45);
+    border: 1px dotted rgba(255, 255, 255, 0.6);
+  }
+
+  .icon-img {
+    width: 40px;
+    height: 40px;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+    /* 바탕화면 위에서 도드라지도록 미세 어두운 외곽 그림자 */
+    filter:
+      drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.6))
+      drop-shadow(0 0 2px rgba(0, 0, 0, 0.45));
+  }
+
+  .icon-label {
+    color: var(--icon-text);
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.2;
+    font-weight: 500;
+    text-shadow:
+      1px 1px 0 var(--icon-text-shadow),
+      -1px -1px 0 var(--icon-text-shadow),
+      1px -1px 0 var(--icon-text-shadow),
+      -1px 1px 0 var(--icon-text-shadow),
+      0 0 3px rgba(0, 0, 0, 0.85);
+    word-break: keep-all;
+  }
+
+  .icon.selected .icon-label {
+    background: #0a3680;
+    color: #ffffff;
+    text-shadow: none;
+    padding: 0 3px;
+  }
+
+  /* ==================== 태스크바 ==================== */
+  .taskbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 32px;
+    background: var(--w-face);
+    border-top: 1px solid var(--w-face-light);
+    box-shadow: inset 0 -1px 0 var(--w-face-darker);
+    display: flex;
+    align-items: center;
+    padding: 3px 3px 3px 3px;
+    gap: 3px;
+    z-index: 100;
+    font-size: 11px;
+  }
+
+  /* 시작 버튼 우측 세로 구분선 */
+  .taskbar-sep {
+    width: 0;
+    height: 24px;
+    border-left: 1px solid var(--w-face-darker);
+    border-right: 1px solid var(--w-face-light);
+    margin: 0 2px;
+    flex-shrink: 0;
+  }
+
+  /* Win98 베벨 버튼 (튀어나옴) */
+  .bevel-out {
+    border-top:    1px solid var(--w-face-light);
+    border-left:   1px solid var(--w-face-light);
+    border-right:  1px solid var(--w-face-darker);
+    border-bottom: 1px solid var(--w-face-darker);
+    box-shadow:
+      inset -1px -1px 0 var(--w-face-dark),
+      inset  1px  1px 0 var(--w-face);
+  }
+
+  /* Win98 베벨 (눌림) */
+  .bevel-in {
+    border-top:    1px solid var(--w-face-darker);
+    border-left:   1px solid var(--w-face-darker);
+    border-right:  1px solid var(--w-face-light);
+    border-bottom: 1px solid var(--w-face-light);
+    box-shadow:
+      inset  1px  1px 0 var(--w-face-dark),
+      inset -1px -1px 0 var(--w-face);
+  }
+
+  .start-btn {
+    height: 24px;
+    padding: 0 8px 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--w-face);
+    color: var(--w-text);
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .start-btn .start-icon {
+    width: 14px;
+    height: 14px;
+    image-rendering: pixelated;
+  }
+
+  /* === 실행 중 프로그램 영역 (태스크바 본체) === */
+  .tasks {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    overflow: hidden;
+    height: 24px;
+  }
+
+  .task-btn {
+    height: 24px;
+    padding: 0 6px 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--w-face);
+    color: var(--w-text);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 11px;
+    min-width: 0;
+    max-width: 180px;
+    flex-shrink: 1;
+    overflow: hidden;
+  }
+
+  .task-btn .task-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    image-rendering: pixelated;
+  }
+
+  .task-btn .task-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 활성 task — 눌림 상태 + 살짝 더 어두운 배경 */
+  .task-btn.active {
+    background: linear-gradient(180deg, #b8bcc0 0%, #c0c4c8 100%);
+  }
+
+  /* 시스템 트레이 (시계 영역) */
+  .systray {
+    height: 24px;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--w-text);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  .systray .tray-icon {
+    width: 14px;
+    height: 14px;
+    image-rendering: pixelated;
+  }
+
+  .systray .tray-clock {
+    font-size: 11px;
+    color: var(--w-text);
+    padding-left: 2px;
+  }
+
+  /* ==================== 시작 메뉴 (열렸을 때) ==================== */
+  .start-menu {
+    position: fixed;
+    bottom: 32px;
+    left: 0;
+    width: 200px;
+    background: var(--w-face);
+    z-index: 99;
+    padding: 2px;
+    display: none;
+  }
+
+  .start-menu.open { display: block; }
+
+  .start-menu .stripe {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    width: 24px;
+    background: linear-gradient(180deg, #5a6c7a 0%, #2c333b 100%);
+    color: #ffffff;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 8px;
+    font-weight: bold;
+    letter-spacing: 4px;
+    font-size: 13px;
+  }
+
+  .start-menu-list {
+    margin-left: 26px;
+    padding: 4px 2px;
+  }
+
+  .start-menu-item {
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--w-text);
+  }
+  .start-menu-item:hover {
+    background: #0a3680;
+    color: #ffffff;
+  }
+  .start-menu-item.disabled {
+    color: var(--w-text-dim);
+  }
+
+  .start-menu-sep {
+    height: 1px;
+    background: var(--w-face-dark);
+    border-bottom: 1px solid var(--w-face-light);
+    margin: 4px 0;
+  }
+
+  /* ==================== Win98 다이얼로그 ==================== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: transparent;
+    z-index: 200;
+    display: none;
+  }
+  .modal-overlay.open { display: block; }
+
+  .dialog {
+    position: absolute;
+    background: var(--w-face);
+    padding: 0;
+    min-width: 360px;
+    max-width: 480px;
+    z-index: 201;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  /* === 호러: 다이얼로그 등장 시 미세 흔들림 === */
+  .dialog.appearing {
+    animation: dialog-shake 0.32s steps(4) 1;
+  }
+  @keyframes dialog-shake {
+    0%   { transform: translateX(-50%) translate(0, 0); }
+    25%  { transform: translateX(-50%) translate(-2px, 1px); }
+    50%  { transform: translateX(-50%) translate(2px, -1px); }
+    75%  { transform: translateX(-50%) translate(-1px, 2px); }
+    100% { transform: translateX(-50%) translate(0, 0); }
+  }
+
+  /* === 호러: 다이얼로그 닫기 직전 본문 글리치 === */
+  .dialog-text.glitching {
+    animation: text-glitch 0.22s steps(3) 1;
+  }
+  @keyframes text-glitch {
+    0%   { letter-spacing: 0; filter: none; }
+    33%  { letter-spacing: 2px; filter: hue-rotate(0deg) brightness(1.2) invert(0.1); }
+    66%  { letter-spacing: -1px; filter: contrast(1.4) brightness(0.85); }
+    100% { letter-spacing: 0; filter: none; }
+  }
+
+  /* === 호러: 화면 전체 짧은 글리치 (낮은 확률, 다이얼로그 닫힘 직후) === */
+  body.screen-glitch .desktop,
+  body.screen-glitch .taskbar {
+    animation: screen-shake 0.45s steps(4) 1;
+  }
+  @keyframes screen-shake {
+    0%   { transform: translate(0, 0); filter: none; }
+    25%  { transform: translate(-3px, 1px); filter: brightness(1.25) invert(0.04); }
+    50%  { transform: translate(2px, -2px); filter: contrast(1.45) brightness(0.82); }
+    75%  { transform: translate(-1px, 2px); filter: invert(0.08); }
+    100% { transform: translate(0, 0); filter: none; }
+  }
+
+  .screen-glitch-flash {
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.08) 0,
+        rgba(255, 255, 255, 0.08) 1px,
+        transparent 1px,
+        transparent 3px
+      ),
+      linear-gradient(to bottom, transparent 35%, rgba(255, 255, 255, 0.18) 50%, transparent 65%);
+    pointer-events: none;
+    z-index: 300;
+    opacity: 0;
+    mix-blend-mode: screen;
+  }
+  body.screen-glitch .screen-glitch-flash {
+    animation: screen-flash 0.45s ease-out 1;
+  }
+  @keyframes screen-flash {
+    0%   { opacity: 0; transform: translateY(-20%); }
+    30%  { opacity: 1; transform: translateY(10%); }
+    100% { opacity: 0; transform: translateY(40%); }
+  }
+
+  .dialog-title {
+    background: var(--w-title-bg);
+    color: var(--w-title-fg);
+    padding: 3px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: move;
+  }
+
+  .dialog-title .x-btn {
+    width: 18px;
+    height: 16px;
+    background: var(--w-face);
+    color: var(--w-text);
+    border-top:    1px solid var(--w-face-light);
+    border-left:   1px solid var(--w-face-light);
+    border-right:  1px solid var(--w-face-darker);
+    border-bottom: 1px solid var(--w-face-darker);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .dialog-body {
+    padding: 16px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .dialog-icon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    image-rendering: pixelated;
+  }
+
+  .dialog-text {
+    flex: 1;
+    color: var(--w-text);
+    line-height: 1.55;
+    font-size: 13px;
+  }
+
+  .dialog-text .small {
+    color: var(--w-text-dim);
+    font-size: 11px;
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+
+  .dialog-buttons {
+    padding: 0 14px 14px 14px;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .dialog-btn {
+    min-width: 80px;
+    height: 24px;
+    padding: 0 12px;
+    background: var(--w-face);
+    color: var(--w-text);
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .dialog-btn:active {
+  }
+
+  /* ==================== 관리국 시스템 창 ==================== */
+  .app-window {
+    position: fixed;
+    top: 60px;
+    left: 120px;
+    width: 1100px;
+    height: 760px;
+    min-width: 1024px;
+    min-height: 768px;
+    background: var(--w-face);
+    z-index: 150;
+    display: none;
+    flex-direction: column;
+    box-shadow:
+      2px 2px 0 rgba(0, 0, 0, 0.5),
+      0 0 24px rgba(0, 0, 0, 0.4);
+  }
+  .app-window.open { display: flex; }
+
+  .app-window.maximized {
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - 32px) !important;
+  }
+
+  .app-window.minimizing {
+    animation: window-minimize 0.32s ease-in forwards;
+  }
+  @keyframes window-minimize {
+    0%   { transform: scale(1) translateY(0); opacity: 1; }
+    100% { transform: scale(0.05) translateY(40vh); opacity: 0; }
+  }
+
+  /* 창 제목바 */
+  .app-titlebar {
+    height: 26px;
+    background: linear-gradient(180deg, #1f2730 0%, #2c333b 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 0 4px 0 6px;
+    flex-shrink: 0;
+    cursor: move;
+    user-select: none;
+  }
+  .app-titlebar .title-icon {
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
+    image-rendering: pixelated;
+    flex-shrink: 0;
+  }
+  .app-titlebar .title-text {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    letter-spacing: -0.2px;
+  }
+  .app-titlebar .title-controls {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+  .title-btn {
+    width: 22px;
+    height: 20px;
+    background: var(--w-face);
+    color: var(--w-text);
+    border-top:    1px solid var(--w-face-light);
+    border-left:   1px solid var(--w-face-light);
+    border-right:  1px solid var(--w-face-darker);
+    border-bottom: 1px solid var(--w-face-darker);
+    font-family: inherit;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .title-btn:active {
+    border-top:    1px solid var(--w-face-darker);
+    border-left:   1px solid var(--w-face-darker);
+    border-right:  1px solid var(--w-face-light);
+    border-bottom: 1px solid var(--w-face-light);
+  }
+  .title-btn .glyph {
+    display: inline-block;
+    line-height: 1;
+  }
+
+  /* 창 본문 */
+  .app-body {
+    flex: 1;
+    background: var(--w-face);
+    border-top:    1px solid var(--w-face);
+    border-left:   2px solid var(--w-face-light);
+    border-right:  2px solid var(--w-face-dark);
+    border-bottom: 2px solid var(--w-face-dark);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 페이지 선택 바 (mockup용 — 창 안에서 어느 페이지를 볼지 선택) */
+  .app-pageswitch {
+    background: var(--w-face);
+    border-bottom: 1px solid var(--w-face-dark);
+    padding: 3px 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    font-size: 11px;
+  }
+  .app-pageswitch .label {
+    color: var(--w-text-dim);
+    margin-right: 4px;
+  }
+  .app-pageswitch button {
+    background: var(--w-face);
+    color: var(--w-text);
+    border-top:    1px solid var(--w-face-light);
+    border-left:   1px solid var(--w-face-light);
+    border-right:  1px solid var(--w-face-darker);
+    border-bottom: 1px solid var(--w-face-darker);
+    font-family: inherit;
+    font-size: 11px;
+    padding: 2px 8px;
+    cursor: pointer;
+  }
+  .app-pageswitch button:active,
+  .app-pageswitch button.active {
+    border-top:    1px solid var(--w-face-darker);
+    border-left:   1px solid var(--w-face-darker);
+    border-right:  1px solid var(--w-face-light);
+    border-bottom: 1px solid var(--w-face-light);
+    background: #b8bcc0;
+  }
+  .app-pageswitch .info {
+    margin-left: auto;
+    color: var(--w-text-dim);
+    font-size: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  /* iframe */
+  .app-iframe {
+    flex: 1;
+    width: 100%;
+    border: none;
+    background: var(--bg-os);
+  }
+
+  /* 리사이즈 핸들 (가장자리·모서리) */
+  .resize-handle {
+    position: absolute;
+    z-index: 5;
+  }
+  .resize-handle.e {
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    cursor: ew-resize;
+  }
+  .resize-handle.s {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    cursor: ns-resize;
+  }
+  .resize-handle.se {
+    bottom: 0;
+    right: 0;
+    width: 14px;
+    height: 14px;
+    cursor: nwse-resize;
+    background:
+      linear-gradient(135deg, transparent 60%, var(--w-face-darker) 60%, var(--w-face-darker) 65%, transparent 65%, transparent 75%, var(--w-face-darker) 75%, var(--w-face-darker) 80%, transparent 80%);
+  }
+
+  /* 창 활성/비활성 (mockup이라 한 창만이라 의미는 적지만 구조 보존) */
+  .app-window.maximized .resize-handle { display: none; }
+
+  /* ==================== mockup 컨트롤 ==================== */
+  .mockup-controls {
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.65);
+    background: rgba(0, 0, 0, 0.55);
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 500;
+    user-select: none;
+    line-height: 1.6;
+  }
+  .mockup-controls .head {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 2px;
+    font-weight: bold;
+  }
+  .mockup-controls a {
+    color: rgba(220, 230, 240, 0.85);
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(220, 230, 240, 0.4);
+  }
+  .mockup-controls a:hover {
+    color: #ffffff;
+    border-bottom-color: #ffffff;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ 바탕화면 ============ -->
+<div class="desktop">
+
+  <!-- 데스크탑 아이콘 -->
+  <div class="icons" id="icons">
+    <div class="icon" data-name="apmb" data-action="apmb">
+      <svg class="icon-img" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <!-- 관리국 시스템 — 8비트 정부 건물 + 잠금 아이콘 -->
+        <rect x="4"  y="6"  width="24" height="22" fill="#c8ccd0"/>
+        <rect x="4"  y="6"  width="24" height="3"  fill="#7a8088"/>
+        <rect x="6"  y="9"  width="2"  height="19" fill="#9aa2aa"/>
+        <rect x="10" y="9"  width="2"  height="19" fill="#9aa2aa"/>
+        <rect x="14" y="9"  width="2"  height="19" fill="#9aa2aa"/>
+        <rect x="18" y="9"  width="2"  height="19" fill="#9aa2aa"/>
+        <rect x="22" y="9"  width="2"  height="19" fill="#9aa2aa"/>
+        <rect x="26" y="9"  width="2"  height="19" fill="#9aa2aa"/>
+        <!-- 지붕 -->
+        <rect x="2"  y="4"  width="28" height="2" fill="#1f2d3a"/>
+        <rect x="14" y="2"  width="4"  height="2" fill="#1f2d3a"/>
+        <!-- 잠금 표식 -->
+        <rect x="13" y="18" width="6" height="5" fill="#1f2d3a"/>
+        <rect x="14" y="16" width="4" height="2" fill="#1f2d3a"/>
+        <rect x="15" y="19" width="2" height="2" fill="#c8ccd0"/>
+      </svg>
+      <div class="icon-label">관리국<br>시스템</div>
+    </div>
+
+    <div class="icon" data-name="mycomputer" data-action="denied" data-prog="내 컴퓨터">
+      <svg class="icon-img" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <!-- 내 컴퓨터 — CRT 모니터 -->
+        <rect x="4"  y="5"  width="24" height="18" fill="#c8ccd0"/>
+        <rect x="5"  y="6"  width="22" height="16" fill="#5a6c7a"/>
+        <rect x="6"  y="7"  width="20" height="14" fill="#3a4a5a"/>
+        <!-- 화면 깜빡임 한 점 -->
+        <rect x="13" y="13" width="2" height="1" fill="#a8b4be"/>
+        <!-- 스탠드 -->
+        <rect x="12" y="23" width="8"  height="2" fill="#7a8088"/>
+        <rect x="10" y="25" width="12" height="2" fill="#9aa2aa"/>
+        <!-- 본체 -->
+        <rect x="4"  y="27" width="24" height="4" fill="#c8ccd0"/>
+        <rect x="6"  y="28" width="3"  height="2" fill="#5a6c7a"/>
+      </svg>
+      <div class="icon-label">내 컴퓨터</div>
+    </div>
+
+    <div class="icon" data-name="recyclebin" data-action="denied" data-prog="휴지통">
+      <svg class="icon-img" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <!-- 휴지통 -->
+        <rect x="6"  y="6"  width="20" height="3" fill="#7a8088"/>
+        <rect x="12" y="4"  width="8"  height="2" fill="#7a8088"/>
+        <rect x="7"  y="9"  width="18" height="20" fill="#c8ccd0"/>
+        <rect x="9"  y="11" width="2"  height="16" fill="#7a8088"/>
+        <rect x="13" y="11" width="2"  height="16" fill="#7a8088"/>
+        <rect x="17" y="11" width="2"  height="16" fill="#7a8088"/>
+        <rect x="21" y="11" width="2"  height="16" fill="#7a8088"/>
+      </svg>
+      <div class="icon-label">휴지통</div>
+    </div>
+
+    <div class="icon" data-name="notepad" data-action="denied" data-prog="메모장">
+      <svg class="icon-img" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <!-- 메모장 -->
+        <rect x="6"  y="4"  width="20" height="24" fill="#e0e4e8"/>
+        <rect x="6"  y="4"  width="20" height="2"  fill="#7a8088"/>
+        <rect x="9"  y="9"  width="14" height="1"  fill="#7a8088"/>
+        <rect x="9"  y="12" width="14" height="1"  fill="#7a8088"/>
+        <rect x="9"  y="15" width="14" height="1"  fill="#7a8088"/>
+        <rect x="9"  y="18" width="10" height="1"  fill="#7a8088"/>
+        <rect x="9"  y="21" width="14" height="1"  fill="#7a8088"/>
+        <rect x="9"  y="24" width="8"  height="1"  fill="#7a8088"/>
+        <!-- 접힌 모서리 -->
+        <rect x="22" y="4"  width="4"  height="4"  fill="#a8b4be"/>
+      </svg>
+      <div class="icon-label">메모장</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============ CRT 레이어 (전역, 데스크탑·태스크바 모두 위에) ============ -->
+<div class="crt-aberration"></div>
+<div class="crt-curvature"></div>
+<div class="vignette"></div>
+<!-- 화면 전체 글리치 플래시 (낮은 확률 발동) -->
+<div class="screen-glitch-flash"></div>
+
+<!-- ============ 시작 메뉴 (기본 닫힘) ============ -->
+<div class="start-menu bevel-out" id="startMenu">
+  <div class="stripe">APMB·98</div>
+  <div class="start-menu-list">
+    <div class="start-menu-item disabled" data-locked="true" data-prog="시스템 설정">
+      <span>⚙</span> 시스템 설정
+    </div>
+    <div class="start-menu-item disabled" data-locked="true" data-prog="파일 검색">
+      <span>🔍</span> 파일 검색
+    </div>
+    <div class="start-menu-item disabled" data-locked="true" data-prog="실행">
+      <span>▶</span> 실행...
+    </div>
+    <div class="start-menu-sep"></div>
+    <div class="start-menu-item disabled" data-locked="true" data-prog="로그오프">
+      <span>↶</span> 로그오프...
+    </div>
+    <div class="start-menu-item disabled" data-locked="true" data-prog="시스템 종료">
+      <span>⏻</span> 시스템 종료...
+    </div>
+  </div>
+</div>
+
+<!-- ============ 태스크바 ============ -->
+<div class="taskbar">
+  <!-- 시작 버튼 -->
+  <button class="start-btn bevel-out" id="startBtn">
+    <span class="start-icon">
+      <!-- Win98/XP 깃발 4색 로고 (펄럭이는 깃발 형태) -->
+      <svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <!-- 깃대 -->
+        <rect x="1" y="2" width="1" height="11" fill="#3a4048"/>
+        <!-- 깃발 4분할 — 좌상단 어두운 빨강, 우상단 어두운 녹색, 좌하단 청회, 우하단 노랑 -->
+        <rect x="2" y="2" width="5" height="4" fill="#c84438"/>
+        <rect x="7" y="2" width="5" height="4" fill="#3c9038"/>
+        <rect x="2" y="6" width="5" height="4" fill="#3068c0"/>
+        <rect x="7" y="6" width="5" height="4" fill="#e8b428"/>
+        <!-- 깃발 우측 끝 펄럭 효과 -->
+        <rect x="12" y="3" width="1" height="2" fill="#c84438"/>
+        <rect x="12" y="7" width="1" height="2" fill="#3068c0"/>
+      </svg>
+    </span>
+    시작
+  </button>
+
+  <!-- 시작 버튼 우측 구분선 -->
+  <div class="taskbar-sep"></div>
+
+  <!-- 실행 중 프로그램들 (mockup용 예시) -->
+  <div class="tasks">
+    <button class="task-btn bevel-in active" data-prog="APMB-DOC-0341 — 노스포비아">
+      <span class="task-icon">
+        <!-- 문서 아이콘 -->
+        <svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+          <rect x="2" y="1" width="9" height="12" fill="#e0e4e8"/>
+          <rect x="2" y="1" width="9" height="1" fill="#7a8088"/>
+          <rect x="10" y="1" width="1" height="12" fill="#7a8088"/>
+          <rect x="3" y="4" width="6" height="1" fill="#5a6068"/>
+          <rect x="3" y="6" width="6" height="1" fill="#5a6068"/>
+          <rect x="3" y="8" width="5" height="1" fill="#5a6068"/>
+          <rect x="3" y="10" width="6" height="1" fill="#5a6068"/>
+        </svg>
+      </span>
+      <span class="task-label">APMB-DOC-0341 — 노스포비아</span>
+    </button>
+
+    <button class="task-btn bevel-out" data-prog="사상체 DB">
+      <span class="task-icon">
+        <!-- 폴더 아이콘 -->
+        <svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+          <rect x="1" y="3" width="5" height="1" fill="#d0a040"/>
+          <rect x="1" y="4" width="12" height="8" fill="#e8c050"/>
+          <rect x="1" y="4" width="12" height="1" fill="#f0d070"/>
+          <rect x="1" y="11" width="12" height="1" fill="#a87830"/>
+        </svg>
+      </span>
+      <span class="task-label">사상체 DB</span>
+    </button>
+
+    <button class="task-btn bevel-out" data-prog="콘솔">
+      <span class="task-icon">
+        <!-- 콘솔 / 터미널 아이콘 -->
+        <svg width="14" height="14" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+          <rect x="1" y="2" width="12" height="10" fill="#1a1f24"/>
+          <rect x="1" y="2" width="12" height="1" fill="#5a6068"/>
+          <rect x="3" y="5" width="1" height="1" fill="#c0c8d0"/>
+          <rect x="4" y="6" width="1" height="1" fill="#c0c8d0"/>
+          <rect x="5" y="7" width="1" height="1" fill="#c0c8d0"/>
+          <rect x="4" y="8" width="1" height="1" fill="#c0c8d0"/>
+          <rect x="3" y="9" width="1" height="1" fill="#c0c8d0"/>
+          <rect x="7" y="9" width="4" height="1" fill="#c0c8d0"/>
+        </svg>
+      </span>
+      <span class="task-label">콘솔</span>
+    </button>
+  </div>
+
+  <!-- 시스템 트레이 -->
+  <div class="systray bevel-in">
+    <!-- 잠금 아이콘 -->
+    <svg class="tray-icon" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="4" y="3" width="6" height="1" fill="#3a4048"/>
+      <rect x="3" y="4" width="1" height="3" fill="#3a4048"/>
+      <rect x="10" y="4" width="1" height="3" fill="#3a4048"/>
+      <rect x="3" y="7" width="8" height="5" fill="#6a7078"/>
+      <rect x="6" y="9" width="2" height="2" fill="#1a1f24"/>
+    </svg>
+    <!-- 신호 / 네트워크 아이콘 (4단계 막대) -->
+    <svg class="tray-icon" viewBox="0 0 14 14" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="2" y="9" width="2" height="3" fill="#3a4048"/>
+      <rect x="5" y="7" width="2" height="5" fill="#3a4048"/>
+      <rect x="8" y="5" width="2" height="7" fill="#3a4048"/>
+      <rect x="11" y="3" width="2" height="9" fill="#3a4048"/>
+    </svg>
+    <span class="tray-clock" id="clock">--:--</span>
+  </div>
+</div>
+
+<!-- ============ 관리국 시스템 창 ============ -->
+<div class="app-window" id="appWindow">
+  <!-- 제목바 -->
+  <div class="app-titlebar" id="appTitlebar">
+    <svg class="title-icon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="0" y="0" width="16" height="16" fill="#1f2730"/>
+      <rect x="1" y="1" width="14" height="14" fill="#2c333b"/>
+      <rect x="6" y="4" width="4" height="1" fill="#a8b4be"/>
+      <rect x="5" y="5" width="6" height="1" fill="#a8b4be"/>
+      <rect x="4" y="6" width="8" height="1" fill="#a8b4be"/>
+      <rect x="6" y="9" width="4" height="4" fill="#a8b4be"/>
+      <rect x="7" y="10" width="2" height="2" fill="#2c333b"/>
+    </svg>
+    <span class="title-text">관리국 시스템 — APMB Intranet (v6.0.3)</span>
+    <div class="title-controls">
+      <button class="title-btn" id="btnMinimize" title="최소화"><span class="glyph">_</span></button>
+      <button class="title-btn" id="btnMaximize" title="최대화"><span class="glyph">□</span></button>
+      <button class="title-btn" id="btnClose" title="닫기"><span class="glyph">×</span></button>
+    </div>
+  </div>
+
+  <!-- 본문 -->
+  <div class="app-body">
+    <!-- 페이지 선택 바 (mockup 전용 — 실배포 시 제거. iframe으로 어느 페이지를 로드할지 선택) -->
+    <div class="app-pageswitch">
+      <span class="label">[mockup] 표시 페이지:</span>
+      <button class="active" data-src="oath.html">보안 서약서</button>
+      <button data-src="dashboard.html">메인 대시보드</button>
+      <button data-src="login.html">로그인 (참고)</button>
+      <span class="info" id="windowSize">— —</span>
+    </div>
+    <!-- iframe 본문 -->
+    <iframe class="app-iframe" id="appIframe" src="oath.html" title="관리국 시스템"></iframe>
+  </div>
+
+  <!-- 리사이즈 핸들 -->
+  <div class="resize-handle e" data-dir="e"></div>
+  <div class="resize-handle s" data-dir="s"></div>
+  <div class="resize-handle se" data-dir="se"></div>
+</div>
+
+<!-- ============ 다이얼로그 (접근 거부 / 안내) ============ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="dialog" id="dialog" style="top: 30%; left: 50%; transform: translateX(-50%);">
+    <div class="dialog-title">
+      <span id="dialogTitleText">알림</span>
+      <button class="x-btn" onclick="closeDialog()">×</button>
+    </div>
+    <div class="dialog-body">
+      <svg class="dialog-icon" id="dialogIcon" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+        <!-- 기본: 빨간 X (Win98 권한 부족 아이콘) -->
+        <circle cx="18" cy="18" r="14" fill="#d88a7a"/>
+        <rect x="9"  y="16" width="18" height="4" fill="#ffffff" transform="rotate(45 18 18)"/>
+        <rect x="9"  y="16" width="18" height="4" fill="#ffffff" transform="rotate(-45 18 18)"/>
+      </svg>
+      <div class="dialog-text">
+        <div id="dialogBodyText"></div>
+        <div class="small" id="dialogSmallText"></div>
+      </div>
+    </div>
+    <div class="dialog-buttons">
+      <button class="dialog-btn bevel-out" onclick="closeDialog()">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ mockup 컨트롤 ============ -->
+<div class="mockup-controls">
+  <div class="head">[mockup] OS 레이어</div>
+  <a href="access.html">← 인트로</a> ·
+  <a href="login.html">← 로그인</a><br>
+  <a href="oath.html">서약서 →</a> ·
+  <a href="dashboard.html">대시보드 →</a><br>
+  <a href="#" onclick="forceScreenGlitch(); return false;">화면 글리치 강제 발동</a>
+</div>
+
+<script>
+// ==================== 시계 ====================
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById('clock').textContent = `${hh}:${mm}`;
+}
+updateClock();
+setInterval(updateClock, 30000);
+
+// ==================== 아이콘 선택·실행 ====================
+let selectedIcon = null;
+
+document.querySelectorAll('.icon').forEach((el) => {
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.icon').forEach((i) => i.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedIcon = el;
+  });
+
+  el.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    const action = el.dataset.action;
+    if (action === 'apmb') {
+      openAppWindow();
+    } else if (action === 'denied') {
+      openDeniedDialog(el.dataset.prog || '');
+    }
+  });
+});
+
+// 빈 공간 클릭 → 선택 해제
+document.querySelector('.desktop').addEventListener('click', () => {
+  document.querySelectorAll('.icon').forEach((i) => i.classList.remove('selected'));
+  selectedIcon = null;
+  closeStartMenu();
+});
+
+// ==================== 시작 메뉴 ====================
+const startBtn = document.getElementById('startBtn');
+const startMenu = document.getElementById('startMenu');
+
+startBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  startMenu.classList.toggle('open');
+  startBtn.classList.toggle('active');
+  if (startBtn.classList.contains('active')) {
+    startBtn.classList.remove('bevel-out');
+    startBtn.classList.add('bevel-in');
+  } else {
+    startBtn.classList.remove('bevel-in');
+    startBtn.classList.add('bevel-out');
+  }
+});
+
+function closeStartMenu() {
+  startMenu.classList.remove('open');
+  startBtn.classList.remove('active', 'bevel-in');
+  startBtn.classList.add('bevel-out');
+}
+
+document.querySelectorAll('.start-menu-item').forEach((item) => {
+  item.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (item.dataset.locked === 'true') {
+      const prog = item.dataset.prog || '시스템 기능';
+      closeStartMenu();
+      openDeniedDialog(prog, true);
+    }
+  });
+});
+
+// ==================== 다이얼로그 ====================
+const modalOverlay = document.getElementById('modalOverlay');
+const dialog = document.getElementById('dialog');
+const dialogTitleText = document.getElementById('dialogTitleText');
+const dialogBodyText = document.getElementById('dialogBodyText');
+const dialogSmallText = document.getElementById('dialogSmallText');
+const dialogIcon = document.getElementById('dialogIcon');
+
+// 프로그램별 차별화된 권한 부족 문구
+const denialMessages = {
+  '내 컴퓨터': {
+    title: '내 컴퓨터 — 접근 거부',
+    body: '본 워크스테이션의 파일 시스템에 대한 열람 권한이 부여되지 아니하였습니다.',
+    small: '본 단말은 본국이 임시 인가한 외부 탐사자(IG) 전용으로 운영되며, 파일 시스템 접근은 RS 등급 이상에 한정됩니다. 본국에 권한 신청 시 [기록 보류]된 절차를 안내받을 수 있습니다.'
+  },
+  '휴지통': {
+    title: '휴지통 — 접근 거부',
+    body: '삭제된 항목의 열람·복원 권한이 부여되지 아니하였습니다.',
+    small: '본국에 의하여 삭제 처리된 자료의 사후 열람은 SC 등급 이상의 별도 절차를 요합니다. IG 등급은 본 영역에 접근할 수 없습니다.'
+  },
+  '메모장': {
+    title: '메모장 — 실행 거부',
+    body: '본 단말에서의 임의 텍스트 작성·저장 기능은 비활성 상태입니다.',
+    small: '인가되지 않은 자료의 본 단말 내 작성은 본국의 보안 정책에 의하여 차단되어 있습니다. 본 항목은 본 단말의 기본 구성 요소이나 본 등급에서 활성화되지 아니합니다.'
+  },
+  '시스템 설정': {
+    title: '시스템 설정 — 접근 거부',
+    body: '시스템 구성의 변경 권한이 부여되지 아니하였습니다.',
+    small: 'IG 등급은 본 단말의 시스템 설정에 접근할 수 없습니다. 모든 설정은 본국의 사전 구성 상태로 고정됩니다.'
+  },
+  '파일 검색': {
+    title: '파일 검색 — 접근 거부',
+    body: '본 단말의 파일 검색 기능은 비활성 상태입니다.',
+    small: '본국이 인가한 자료는 *관리국 시스템* 내부의 자료실에서만 조회 가능합니다.'
+  },
+  '실행': {
+    title: '실행... — 접근 거부',
+    body: '임의 프로그램의 실행 권한이 부여되지 아니하였습니다.',
+    small: '본 단말에서 실행 가능한 프로그램은 본국이 사전 등록한 항목에 한정됩니다.'
+  },
+  '로그오프': {
+    title: '로그오프 — 차단',
+    body: '본 세션은 자율 로그오프 대상이 아닙니다.',
+    small: 'IG 등급 세션은 본국의 비활성 만료 정책(24시간 무활동)에 종속되며, 임의 로그오프는 제공되지 아니합니다.'
+  },
+  '시스템 종료': {
+    title: '시스템 종료 — 차단',
+    body: '본 워크스테이션의 종료 권한이 부여되지 아니하였습니다.',
+    small: '본 단말은 본국이 *상시 운영* 상태로 유지하는 인트라넷 단말입니다. 시청자는 본 단말을 종료할 수 없습니다.'
+  }
+};
+
+// 현재 열린 다이얼로그가 접근 거부 유형인지 (호러 효과 분기용)
+let dialogIsDenied = false;
+
+function triggerAppearShake() {
+  dialog.classList.remove('appearing');
+  // reflow 강제 후 클래스 재부여 — 연속 호출에서도 애니메이션이 다시 발동되도록
+  void dialog.offsetWidth;
+  dialog.classList.add('appearing');
+}
+
+function openDeniedDialog(prog) {
+  const msg = denialMessages[prog] || {
+    title: '접근 거부',
+    body: '해당 항목에 대한 권한이 부여되지 아니하였습니다.',
+    small: ''
+  };
+  dialogTitleText.textContent = msg.title;
+  dialogBodyText.textContent = msg.body;
+  dialogSmallText.textContent = msg.small;
+  // 빨간 X 아이콘 유지 (기본)
+  dialogIsDenied = true;
+  modalOverlay.classList.add('open');
+  triggerAppearShake();
+}
+
+
+function closeDialog() {
+  // 접근 거부 다이얼로그만 닫기 호러 적용
+  if (dialogIsDenied) {
+    // 1) 본문 글리치 (닫기 직전 0.22초)
+    const dialogText = dialog.querySelector('.dialog-text');
+    dialogText.classList.add('glitching');
+
+    setTimeout(() => {
+      // 글리치 종료 후 다이얼로그 닫기
+      dialogText.classList.remove('glitching');
+      modalOverlay.classList.remove('open');
+      dialog.classList.remove('appearing');
+
+      // 2) 낮은 확률(8%)로 화면 전체 글리치
+      if (Math.random() < 0.08) {
+        document.body.classList.add('screen-glitch');
+        setTimeout(() => {
+          document.body.classList.remove('screen-glitch');
+        }, 460);
+      }
+
+      // 아이콘 복구
+      resetDialogIcon();
+      dialogIsDenied = false;
+    }, 220);
+  } else {
+    // 정보 다이얼로그 등 — 즉시 닫기
+    modalOverlay.classList.remove('open');
+    dialog.classList.remove('appearing');
+    resetDialogIcon();
+  }
+}
+
+// ==================== 관리국 시스템 창 ====================
+const appWindow = document.getElementById('appWindow');
+const appTitlebar = document.getElementById('appTitlebar');
+const appIframe = document.getElementById('appIframe');
+const btnMinimize = document.getElementById('btnMinimize');
+const btnMaximize = document.getElementById('btnMaximize');
+const btnClose = document.getElementById('btnClose');
+const windowSizeLabel = document.getElementById('windowSize');
+
+const APP_MIN_W = 1024;
+const APP_MIN_H = 768;
+let isMaximized = false;
+let savedRect = null;
+
+function openAppWindow() {
+  appWindow.classList.add('open');
+  appWindow.classList.remove('minimizing');
+  updateSizeLabel();
+}
+
+function closeAppWindow() {
+  appWindow.classList.remove('open');
+  appWindow.classList.remove('maximized');
+  isMaximized = false;
+}
+
+function minimizeAppWindow() {
+  appWindow.classList.add('minimizing');
+  setTimeout(() => {
+    appWindow.classList.remove('open');
+    appWindow.classList.remove('minimizing');
+  }, 320);
+}
+
+function toggleMaximize() {
+  if (isMaximized) {
+    appWindow.classList.remove('maximized');
+    if (savedRect) {
+      appWindow.style.top    = savedRect.top + 'px';
+      appWindow.style.left   = savedRect.left + 'px';
+      appWindow.style.width  = savedRect.width + 'px';
+      appWindow.style.height = savedRect.height + 'px';
+    }
+    isMaximized = false;
+  } else {
+    savedRect = {
+      top: appWindow.offsetTop,
+      left: appWindow.offsetLeft,
+      width: appWindow.offsetWidth,
+      height: appWindow.offsetHeight
+    };
+    appWindow.classList.add('maximized');
+    isMaximized = true;
+  }
+  // 다음 프레임에 크기 갱신 (transform 적용 후)
+  requestAnimationFrame(updateSizeLabel);
+}
+
+btnClose.addEventListener('click', closeAppWindow);
+btnMinimize.addEventListener('click', minimizeAppWindow);
+btnMaximize.addEventListener('click', toggleMaximize);
+
+// === 드래그 ===
+let dragging = false;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
+appTitlebar.addEventListener('mousedown', (e) => {
+  if (isMaximized) return;
+  if (e.target.closest('.title-btn')) return;
+  dragging = true;
+  const rect = appWindow.getBoundingClientRect();
+  dragOffsetX = e.clientX - rect.left;
+  dragOffsetY = e.clientY - rect.top;
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!dragging) return;
+  const newLeft = e.clientX - dragOffsetX;
+  const newTop = Math.max(0, e.clientY - dragOffsetY);
+  appWindow.style.left = newLeft + 'px';
+  appWindow.style.top = newTop + 'px';
+});
+
+document.addEventListener('mouseup', () => {
+  dragging = false;
+  resizing = false;
+  resizeDir = null;
+});
+
+// === 리사이즈 ===
+let resizing = false;
+let resizeDir = null;
+let resizeStartX = 0;
+let resizeStartY = 0;
+let resizeStartW = 0;
+let resizeStartH = 0;
+
+document.querySelectorAll('.resize-handle').forEach((handle) => {
+  handle.addEventListener('mousedown', (e) => {
+    if (isMaximized) return;
+    resizing = true;
+    resizeDir = handle.dataset.dir;
+    resizeStartX = e.clientX;
+    resizeStartY = e.clientY;
+    resizeStartW = appWindow.offsetWidth;
+    resizeStartH = appWindow.offsetHeight;
+    e.preventDefault();
+    e.stopPropagation();
+  });
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!resizing) return;
+  const dx = e.clientX - resizeStartX;
+  const dy = e.clientY - resizeStartY;
+
+  if (resizeDir.includes('e')) {
+    const newW = Math.max(APP_MIN_W, resizeStartW + dx);
+    appWindow.style.width = newW + 'px';
+  }
+  if (resizeDir.includes('s')) {
+    const newH = Math.max(APP_MIN_H, resizeStartH + dy);
+    appWindow.style.height = newH + 'px';
+  }
+  updateSizeLabel();
+});
+
+// === 페이지 선택 ===
+document.querySelectorAll('.app-pageswitch button[data-src]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.app-pageswitch button[data-src]').forEach((b) => b.classList.remove('active'));
+    btn.classList.add('active');
+    appIframe.src = btn.dataset.src;
+  });
+});
+
+// === 창 크기 라벨 ===
+function updateSizeLabel() {
+  const w = appWindow.offsetWidth;
+  const h = appWindow.offsetHeight;
+  windowSizeLabel.textContent = `${w} × ${h}`;
+}
+
+window.addEventListener('resize', () => {
+  if (isMaximized) updateSizeLabel();
+});
+
+// mockup 검토용 — 화면 글리치 강제 발동
+function forceScreenGlitch() {
+  document.body.classList.remove('screen-glitch');
+  void document.body.offsetWidth;
+  document.body.classList.add('screen-glitch');
+  setTimeout(() => {
+    document.body.classList.remove('screen-glitch');
+  }, 460);
+}
+
+function resetDialogIcon() {
+  dialogIcon.innerHTML = `
+    <circle cx="18" cy="18" r="14" fill="#d88a7a"/>
+    <rect x="9"  y="16" width="18" height="4" fill="#ffffff" transform="rotate(45 18 18)"/>
+    <rect x="9"  y="16" width="18" height="4" fill="#ffffff" transform="rotate(-45 18 18)"/>
+  `;
+}
+
+// 오버레이 클릭 (다이얼로그 영역 외) → 닫지 않음 (Win98 모달 톤)
+// ESC 키로 닫기
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (modalOverlay.classList.contains('open')) closeDialog();
+    else closeStartMenu();
+  }
+});
+</script>
+
+</body>
+</html>

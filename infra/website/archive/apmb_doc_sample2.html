@@ -1,0 +1,3662 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aj-06-SP-0341 — 노스포비아 | APMB 문서 시스템</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* === 페이지 베이스 (그레이 톤) === */
+  --bg-page: #e6e6ea;
+  --bg-paper: #fafafc;
+  --bg-sidebar: #eeeef1;
+  --bg-infobox: #f4f4f7;
+
+  /* === 헤더/다크 영역 (그레이 톤) === */
+  --bg-header: #2a2a32;          /* 메인 헤더 - 다크 그레이 */
+  --bg-header-dark: #1d1d24;
+  --bg-header-darker: #14141a;
+  --bg-dark-panel: #20202a;      /* 다크 다이얼로그 바 */
+  --bg-dark-panel-edge: #38383f; /* 다크 패널 보더 */
+
+  /* === 시그니처 퍼플 (액센트 전용 — 절제 사용) === */
+  --accent: #4a3b7a;             /* 액센트 보라 */
+  --accent-bright: #6849bb;      /* 링크/포인트 */
+  --accent-glow: #8b6dc7;        /* 글리치/하이라이트 */
+  --accent-deep: #322659;        /* 시그니처 딥 퍼플 — 강한 강조에만 */
+
+  /* === 텍스트 === */
+  --text-primary: #1a1a1f;
+  --text-secondary: #5a5a64;
+  --text-muted: #8a8a92;
+  --text-on-dark: #c8c8d0;       /* 다크 배경 위 텍스트 (그레이) */
+  --text-on-dark-dim: #8a8a96;   /* 다크 배경 위 흐린 텍스트 */
+
+  /* === 보더 === */
+  --border-soft: #d4d4d8;
+  --border-medium: #b5b5bc;
+  --border-strong: #3a3a44;      /* 강조 보더 - 다크 그레이 */
+  --border-accent: #322659;      /* 액센트 보더 - 보라 (한정 사용) */
+
+  /* === 상태색 === */
+  --censor: #15151a;
+  --warning: #a8443e;
+  --warning-bg: #f9eeed;
+  --success: #5e8a4e;
+
+  /* === 터미널 === */
+  --terminal-green: #6dbf6d;
+  --terminal-amber: #f0c090;
+  --terminal-cyan: #5fb8c4;
+  --terminal-magenta: #d472a8;
+  --terminal-bg: #1a1a22;
+  --terminal-bg-darker: #12121a;
+
+  /* === 그림자 (중성 톤) === */
+  --shadow-pixel: rgba(30, 30, 38, 0.16);
+  --shadow-pixel-strong: rgba(20, 20, 26, 0.28);
+  --shadow-accent: rgba(20, 20, 28, 0.18);  /* 액센트 그림자 (보라) — 강조용 */
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* === 부팅 시퀀스 === */
+.boot-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--terminal-bg-darker);
+  z-index: 9999;
+  color: var(--terminal-green);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  padding: 80px 60px;
+  letter-spacing: 0.3px;
+  animation: boot-fade 1.6s ease-out forwards;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.boot-overlay .boot-line {
+  opacity: 0;
+  white-space: nowrap;
+  animation: boot-line-in 0.001s forwards;
+}
+
+.boot-overlay .boot-line:nth-child(1) { animation-delay: 0.05s; }
+.boot-overlay .boot-line:nth-child(2) { animation-delay: 0.15s; }
+.boot-overlay .boot-line:nth-child(3) { animation-delay: 0.25s; }
+.boot-overlay .boot-line:nth-child(4) { animation-delay: 0.35s; }
+.boot-overlay .boot-line:nth-child(5) { animation-delay: 0.45s; }
+.boot-overlay .boot-line:nth-child(6) { animation-delay: 0.55s; }
+.boot-overlay .boot-line:nth-child(7) { animation-delay: 0.65s; }
+.boot-overlay .boot-line:nth-child(8) { animation-delay: 0.75s; }
+.boot-overlay .boot-line:nth-child(9) { animation-delay: 0.85s; }
+.boot-overlay .boot-line:nth-child(10) { animation-delay: 0.95s; }
+.boot-overlay .boot-line .amber { color: var(--terminal-amber); }
+.boot-overlay .boot-line .dim { color: #7575a0; }
+
+@keyframes boot-line-in {
+  to { opacity: 1; }
+}
+
+@keyframes boot-fade {
+  0% { opacity: 1; }
+  88% { opacity: 1; pointer-events: auto; }
+  100% { opacity: 0; pointer-events: none; visibility: hidden; }
+}
+
+.boot-overlay {
+  animation: boot-fade 2.2s ease-out forwards;
+}
+
+.boot-overlay .boot-line:nth-child(11) { animation-delay: 1.05s; }
+.boot-overlay .boot-line:nth-child(12) { animation-delay: 1.18s; }
+.boot-overlay .boot-line:nth-child(13) { animation-delay: 1.32s; }
+.boot-overlay .boot-line:nth-child(14) { animation-delay: 1.55s; }
+
+/* === SVG 그레인 노이즈 (전체 페이지) === */
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 998;
+  opacity: 0.06;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  mix-blend-mode: multiply;
+}
+
+/* === 페이지 전체 스캔라인 (강화) === */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(40, 40, 50, 0.05) 3px,
+    rgba(40, 40, 50, 0.05) 3px
+  );
+  pointer-events: none;
+  z-index: 1000;
+  mix-blend-mode: multiply;
+}
+
+/* === CRT 곡률 비네팅 === */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 130% 100% at center,
+      transparent 50%,
+      rgba(20, 20, 28, 0.22) 95%,
+      rgba(15, 15, 20, 0.4) 100%
+    );
+  pointer-events: none;
+  z-index: 999;
+}
+
+/* === 상단 시스템 바 === */
+.system-bar {
+  background: var(--terminal-bg-darker);
+  color: #b0b0c0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  padding: 5px 24px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #2a2a35;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: relative;
+  z-index: 10;
+}
+
+.system-bar .group { display: flex; gap: 18px; flex-wrap: wrap; }
+
+.status-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  background: var(--terminal-green);
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+  box-shadow: 0 0 6px var(--terminal-green);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 5px var(--terminal-green); }
+  50% { box-shadow: 0 0 10px var(--terminal-green), 0 0 3px var(--terminal-green); }
+}
+
+.sysbar-divider { color: #3a3a4a; }
+
+/* === 흐르는 데이터 스트림 (헤더 상단) === */
+.data-stream-bar {
+  background: var(--bg-header-darker);
+  color: #6a6a76;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  padding: 3px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  border-bottom: 1px solid #25252c;
+  letter-spacing: 0.5px;
+  position: relative;
+}
+
+.data-stream-bar::before,
+.data-stream-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 60px;
+  z-index: 2;
+  pointer-events: none;
+}
+.data-stream-bar::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg-header-darker), transparent);
+}
+.data-stream-bar::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg-header-darker), transparent);
+}
+
+.data-stream-bar .stream {
+  display: inline-block;
+  padding-left: 100%;
+  animation: stream-flow 60s linear infinite;
+}
+
+.data-stream-bar .stream .hot { color: var(--terminal-amber); }
+.data-stream-bar .stream .ok { color: var(--terminal-green); }
+
+@keyframes stream-flow {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* === 메인 헤더 === */
+.main-header {
+  background: linear-gradient(180deg, var(--bg-header) 0%, var(--bg-header-dark) 100%);
+  color: #fff;
+  padding: 18px 24px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.main-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent 0px, transparent 3px,
+      rgba(255,255,255,0.018) 3px, rgba(255,255,255,0.018) 4px
+    ),
+    radial-gradient(circle at 20% 30%, rgba(104, 73, 187, 0.10) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(139, 109, 199, 0.08) 0%, transparent 35%);
+  pointer-events: none;
+}
+
+.main-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 4px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--bg-header-darker) 0px, var(--bg-header-darker) 6px,
+    var(--accent-bright) 6px, var(--accent-bright) 8px,
+    var(--bg-header-darker) 8px, var(--bg-header-darker) 10px,
+    var(--accent-glow) 10px, var(--accent-glow) 11px
+  );
+}
+
+.header-top {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+.logo-block { display: flex; align-items: center; gap: 14px; }
+
+.logo-mark {
+  width: 48px; height: 48px;
+  background: #fff;
+  color: var(--bg-header);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  border: 2px solid #c0c0c8;
+  letter-spacing: -0.5px;
+  position: relative;
+  box-shadow: 3px 3px 0 -1px rgba(0,0,0,0.4);
+}
+.logo-mark::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1px solid rgba(255,255,255,0.25);
+  pointer-events: none;
+}
+.logo-mark::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(40, 40, 50, 0.15);
+  pointer-events: none;
+}
+
+.logo-text .name {
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.logo-text .subname {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #b0b0b8;
+  letter-spacing: 0.6px;
+  margin-top: 3px;
+}
+
+.logo-text .data-stream {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: #7a7a85;
+  letter-spacing: 0.4px;
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.search-block input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+  padding: 7px 12px;
+  font-size: 12.5px;
+  width: 260px;
+  font-family: 'Noto Sans KR', sans-serif;
+  border-radius: 0;
+}
+.search-block input::placeholder { color: #9a9aa2; }
+.search-block input:focus {
+  outline: none;
+  border-color: var(--accent-bright);
+  background: rgba(255,255,255,0.1);
+  box-shadow: 0 0 0 2px rgba(104, 73, 187, 0.2);
+}
+
+.header-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  color: #9a9aa2;
+  letter-spacing: 0.4px;
+  display: flex;
+  gap: 12px;
+}
+
+.header-meta .live::before {
+  content: '●';
+  color: var(--terminal-green);
+  margin-right: 4px;
+  animation: pulse-dot 2s infinite;
+}
+
+.main-nav {
+  max-width: 1320px;
+  margin: 18px auto 0;
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+.main-nav a {
+  padding: 9px 16px;
+  color: #cccdd5;
+  text-decoration: none;
+  font-size: 13px;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: background 0.12s;
+}
+
+.main-nav a:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.05);
+}
+
+.main-nav a.active {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+  border-bottom-color: var(--accent-bright);
+}
+
+/* === 브레드크럼 === */
+.breadcrumb {
+  background: var(--bg-paper);
+  border-bottom: 1px solid var(--border-soft);
+  padding: 9px 24px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  position: relative;
+}
+
+.breadcrumb .inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  font-family: 'JetBrains Mono', monospace;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb a { color: var(--accent); text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { color: var(--text-muted); margin: 0 7px; }
+
+.breadcrumb .read-stat {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+}
+
+.breadcrumb .read-stat .pill {
+  background: var(--accent);
+  color: #fff;
+  padding: 1px 7px;
+  margin-left: 4px;
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+}
+
+/* === 메인 그리드 === */
+.page-wrap {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 220px 1fr 300px;
+  gap: 22px;
+  padding: 22px;
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 1100px) {
+  .page-wrap { grid-template-columns: 1fr; }
+  .sidebar, .infobox-column { display: none; }
+}
+
+/* === 좌측 사이드바 === */
+.sidebar { font-size: 12px; }
+
+.sidebar-section {
+  background: var(--bg-paper);
+  border: 1px solid var(--border-soft);
+  margin-bottom: 12px;
+  box-shadow: 2px 2px 0 -1px rgba(20, 20, 28, 0.10);
+}
+
+.sidebar-section h3 {
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border-soft);
+  padding: 9px 12px;
+  font-size: 10.5px;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-section h3 .indicator {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--terminal-green);
+  letter-spacing: 0.5px;
+}
+
+.sidebar-section ul {
+  list-style: none;
+  padding: 6px 0;
+}
+
+.sidebar-section li a {
+  display: block;
+  padding: 5px 12px;
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 12.5px;
+  border-left: 3px solid transparent;
+  transition: color 0.12s;
+}
+
+.sidebar-section li a:hover {
+  background: var(--bg-sidebar);
+  border-left-color: var(--accent);
+  color: var(--accent);
+}
+
+.sidebar-section li.active a {
+  background: rgba(74, 59, 122, 0.08);
+  border-left-color: var(--accent);
+  font-weight: 500;
+  color: var(--accent);
+}
+
+.sidebar-section li.sub a {
+  padding-left: 26px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.changelog-item {
+  padding: 6px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  border-bottom: 1px dotted var(--border-soft);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.changelog-item:last-child { border-bottom: 0; }
+.changelog-item .left-col { flex: 1; }
+.changelog-item .ver { color: var(--accent); font-weight: 500; }
+.changelog-item .pulse {
+  width: 6px; height: 6px;
+  background: var(--terminal-green);
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+  animation: pulse-dot 2s infinite;
+}
+.changelog-item .pulse.old { background: var(--text-muted); animation: none; }
+
+/* === 시스템 알림 로그 === */
+.alert-log {
+  background: var(--terminal-bg);
+  border: 1px solid #2a2a35;
+  margin-bottom: 12px;
+  box-shadow: 2px 2px 0 -1px rgba(20, 20, 28, 0.16);
+}
+
+.alert-log .alert-head {
+  background: var(--terminal-bg-darker);
+  color: var(--terminal-green);
+  padding: 7px 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid #2a2a35;
+  display: flex;
+  justify-content: space-between;
+}
+
+.alert-log .alert-body {
+  padding: 8px 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #b0b0c0;
+}
+
+.alert-log .entry {
+  padding: 3px 0;
+  border-bottom: 1px dotted #2a2a35;
+  line-height: 1.5;
+}
+.alert-log .entry:last-child { border: 0; }
+.alert-log .entry .ts { color: #7575a0; }
+.alert-log .entry .tag {
+  display: inline-block;
+  padding: 0 4px;
+  margin: 0 4px 0 2px;
+  font-size: 9px;
+  letter-spacing: 0.3px;
+}
+.alert-log .entry .tag.info { background: #2a3a5a; color: #a0b8e0; }
+.alert-log .entry .tag.warn { background: #5a3a2a; color: var(--terminal-amber); }
+.alert-log .entry .tag.ok { background: #2a4a2a; color: var(--terminal-green); }
+
+/* === 활동 히트맵 (사이드바 신규) === */
+.heatmap-widget {
+  background: var(--terminal-bg);
+  border: 1px solid #2a2a35;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  box-shadow: 2px 2px 0 -1px rgba(20, 20, 28, 0.16);
+}
+
+.heatmap-widget .hm-head {
+  color: var(--terminal-green);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #2a2a35;
+  display: flex;
+  justify-content: space-between;
+}
+
+.heatmap-widget .grid {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.heatmap-widget .cell {
+  aspect-ratio: 1;
+  background: #2a2a35;
+}
+.heatmap-widget .cell.l1 { background: #2a4a2a; }
+.heatmap-widget .cell.l2 { background: #3d6d3d; }
+.heatmap-widget .cell.l3 { background: #5fa05f; }
+.heatmap-widget .cell.l4 { background: var(--terminal-green); }
+.heatmap-widget .cell.warn { background: var(--terminal-amber); }
+
+.heatmap-widget .hm-foot {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.5px;
+  color: #7575a0;
+  display: flex;
+  justify-content: space-between;
+  letter-spacing: 0.4px;
+}
+
+/* === 메인 콘텐츠 === */
+.content {
+  background: var(--bg-paper);
+  border: 1px solid var(--border-soft);
+  position: relative;
+  box-shadow: 4px 4px 0 -1px rgba(20, 20, 28, 0.13);
+}
+
+.content-header {
+  border-bottom: 2px solid var(--border-strong);
+  padding: 22px 32px 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f3f3f6 100%);
+  position: relative;
+}
+
+.content-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--bg-header) 0, var(--bg-header) 14px,
+    var(--accent-bright) 14px, var(--accent-bright) 16px,
+    var(--accent-glow) 16px, var(--accent-glow) 18px
+  );
+}
+
+.content-header .corner-monitor {
+  position: absolute;
+  top: 22px; right: 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: right;
+  line-height: 1.5;
+  background: rgba(50, 50, 60, 0.05);
+  border: 1px solid var(--border-soft);
+  padding: 6px 10px;
+  letter-spacing: 0.4px;
+}
+
+.content-header .corner-monitor .live { color: var(--terminal-green); }
+.content-header .corner-monitor .live::before {
+  content: '●';
+  margin-right: 3px;
+  animation: pulse-dot 2s infinite;
+}
+
+.doc-meta-line {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.doc-meta-line .meta-tag {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* === 글리치 제목 (RGB 색수차) === */
+.doc-title {
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.6px;
+  line-height: 1.2;
+}
+
+.doc-title .code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 5px;
+  letter-spacing: 0.3px;
+}
+
+.glitch-text {
+  position: relative;
+  display: inline-block;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.glitch-text::before {
+  color: var(--terminal-cyan);
+  transform: translateX(-1.5px);
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  animation: glitch-shift-1 4s infinite;
+}
+
+.glitch-text::after {
+  color: var(--terminal-magenta);
+  transform: translateX(1.5px);
+  mix-blend-mode: screen;
+  opacity: 0.7;
+  animation: glitch-shift-2 4s infinite;
+}
+
+@keyframes glitch-shift-1 {
+  0%, 90%, 100% { transform: translateX(-1.5px); }
+  92% { transform: translateX(-3px); }
+  94% { transform: translateX(0px); }
+  96% { transform: translateX(-2px); }
+}
+
+@keyframes glitch-shift-2 {
+  0%, 90%, 100% { transform: translateX(1.5px); }
+  92% { transform: translateX(3px); }
+  94% { transform: translateX(-1px); }
+  96% { transform: translateX(2.5px); }
+}
+
+.doc-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 10px;
+  font-style: italic;
+}
+
+/* === 경고 배너 === */
+.warning-banner {
+  background: var(--warning-bg);
+  border-left: 4px solid var(--warning);
+  padding: 12px 16px;
+  margin: 16px 32px 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  position: relative;
+}
+
+.warning-banner::before {
+  content: '⚠';
+  position: absolute;
+  top: 11px; right: 14px;
+  color: var(--warning);
+  font-size: 18px;
+  opacity: 0.4;
+}
+
+.warning-banner strong {
+  color: var(--warning);
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-weight: 600;
+}
+
+/* === 콘텐츠 본문 === */
+.doc-body { padding: 22px 32px 32px; }
+
+.doc-body h2 {
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-soft);
+  padding-bottom: 7px;
+  margin: 30px 0 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  position: relative;
+}
+
+.doc-body h2 .section-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.doc-body h2 .section-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: auto;
+  letter-spacing: 0.4px;
+}
+
+.doc-body h2:first-child { margin-top: 4px; }
+
+.doc-body h3 {
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 22px 0 10px;
+}
+
+.doc-body p {
+  margin-bottom: 12px;
+  text-align: justify;
+  word-break: keep-all;
+}
+
+.doc-body ul, .doc-body ol { margin: 6px 0 14px 24px; }
+.doc-body li { margin-bottom: 4px; line-height: 1.7; }
+
+.doc-body a {
+  color: var(--accent-bright);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--accent-bright);
+}
+.doc-body a:hover { background: rgba(104, 73, 187, 0.08); }
+
+.doc-body em { color: var(--accent); font-style: italic; }
+
+/* === 인라인 시스템 메시지 === */
+.inline-sys {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  background: rgba(50, 50, 60, 0.05);
+  border-left: 2px solid var(--accent);
+  padding: 4px 10px;
+  margin: 10px 0;
+  letter-spacing: 0.3px;
+}
+
+.inline-sys .ts { color: var(--accent); }
+.inline-sys .tag-sys {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  padding: 0 5px;
+  margin: 0 6px;
+  font-size: 9.5px;
+  letter-spacing: 0.4px;
+}
+.inline-sys .tag-sys.warn { background: var(--warning); }
+.inline-sys .tag-sys.echo { background: var(--terminal-bg); color: var(--terminal-green); }
+
+/* === 인라인 시스템 태그 === */
+.sys-tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  padding: 1px 6px;
+  background: rgba(50, 50, 60, 0.07);
+  color: var(--text-secondary);
+  border: 1px solid rgba(50, 50, 60, 0.22);
+  letter-spacing: 0.3px;
+  vertical-align: 1px;
+}
+
+.sys-tag.warn {
+  background: rgba(168, 68, 62, 0.1);
+  color: var(--warning);
+  border-color: rgba(168, 68, 62, 0.3);
+}
+
+/* === 검열 표시 === */
+.censored {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      var(--censor) 0px, var(--censor) 2px,
+      #2a2a30 2px, #2a2a30 3px
+    );
+  color: transparent;
+  padding: 0 4px;
+  user-select: none;
+  letter-spacing: -1px;
+  font-family: monospace;
+  display: inline-block;
+  text-shadow: 0 0 0 transparent;
+  transition: filter 0.3s;
+  position: relative;
+}
+
+.censored:hover {
+  filter: brightness(1.4);
+}
+
+.censored.box {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      var(--censor) 0px, var(--censor) 2px,
+      #2a2a30 2px, #2a2a30 3px
+    );
+  color: transparent;
+  padding: 2px 9px;
+}
+
+/* === 사건 기록 (윈도우 다이얼로그 스타일) === */
+.record {
+  background: #f0eef5;
+  border: 1px solid #b8b3c8;
+  margin: 16px 0;
+  font-size: 13px;
+  line-height: 1.65;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    3px 3px 0 -1px rgba(20, 20, 28, 0.16);
+}
+
+.record .window-bar {
+  background: linear-gradient(to right, var(--bg-header) 0%, var(--bg-dark-panel-edge) 100%);
+  color: #fff;
+  padding: 4px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.record .window-bar .controls { display: flex; gap: 4px; }
+
+.record .window-bar .controls .btn {
+  width: 14px; height: 14px;
+  background: #d4d4d8;
+  border: 1px solid #15151a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #15151a;
+  line-height: 1;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.record .record-header {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  padding: 9px 14px 6px;
+  letter-spacing: 0.4px;
+  border-bottom: 1px dotted var(--border-soft);
+}
+
+.record .record-header .code {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.record .record-body { padding: 10px 14px 13px; }
+.record .record-body p { margin-bottom: 8px; }
+.record .record-body p:last-child { margin-bottom: 0; }
+
+/* === 시스템 침투 알림 (가짜 다이얼로그) === */
+.system-notice {
+  background: #1a1a22;
+  border: 1px solid #3a3a44;
+  margin: 18px 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #cccdd5;
+  box-shadow: 3px 3px 0 -1px rgba(20, 20, 28, 0.22);
+}
+
+.system-notice .notice-bar {
+  background: linear-gradient(to right, #14141a, #2a2a32);
+  padding: 4px 8px;
+  font-size: 10px;
+  color: #b0b0b8;
+  letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #404048;
+}
+
+.system-notice .notice-bar .controls { display: flex; gap: 3px; }
+.system-notice .notice-bar .controls .btn {
+  width: 14px; height: 14px;
+  background: #d4d4d8;
+  border: 1px solid #15151a;
+  font-size: 9px;
+  color: #15151a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.system-notice .notice-body {
+  padding: 11px 14px;
+  line-height: 1.6;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.system-notice .icon {
+  font-size: 22px;
+  color: var(--accent-glow);
+  line-height: 1;
+  margin-top: -2px;
+}
+
+.system-notice .notice-buttons {
+  display: flex;
+  gap: 8px;
+  padding: 4px 14px 12px;
+  justify-content: flex-end;
+}
+
+.system-notice .notice-buttons button {
+  background: #d4d4d8;
+  border: 1px solid #15151a;
+  color: #15151a;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  padding: 3px 14px;
+  cursor: pointer;
+  box-shadow: inset 1px 1px 0 #fff, 2px 2px 0 -1px rgba(0,0,0,0.4);
+}
+
+.system-notice .notice-buttons button:hover { background: #c4c4c8; }
+
+/* === 첨부 자료 박스 (신규, 본문 안에) === */
+.attachment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 16px 0;
+}
+
+@media (max-width: 700px) {
+  .attachment-grid { grid-template-columns: 1fr; }
+}
+
+.attachment {
+  background: var(--bg-infobox);
+  border: 1px solid var(--border-medium);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  box-shadow: 2px 2px 0 -1px rgba(20, 20, 28, 0.16);
+  transition: transform 0.1s;
+  cursor: pointer;
+}
+
+.attachment:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 -1px rgba(20, 20, 28, 0.18);
+}
+
+.attachment .thumb {
+  height: 88px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      #25252c 0px, #25252c 8px,
+      #16161c 8px, #16161c 16px
+    );
+  position: relative;
+  overflow: hidden;
+  color: #b0b0b8;
+  font-size: 9px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.attachment .thumb.img {
+  background: linear-gradient(135deg, #25252c 0%, #15151a 60%, #2a2a32 100%);
+}
+
+.attachment .thumb.locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  opacity: 0.6;
+}
+
+.attachment .thumb .corner {
+  align-self: flex-end;
+  color: var(--terminal-green);
+  font-size: 8.5px;
+  letter-spacing: 0.4px;
+}
+
+.attachment .thumb .scan-static {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0, transparent 2px,
+    rgba(255,255,255,0.04) 2px, rgba(255,255,255,0.04) 3px
+  );
+  pointer-events: none;
+}
+
+.attachment .thumb .filename-pre {
+  color: #cccdd5;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  position: relative;
+  z-index: 1;
+}
+
+.attachment .meta {
+  padding: 8px 10px;
+  border-top: 1px solid var(--border-soft);
+  background: #fff;
+}
+
+.attachment .meta .fn {
+  color: var(--accent);
+  display: block;
+  font-weight: 500;
+  margin-bottom: 2px;
+  word-break: break-all;
+}
+
+.attachment .meta .info {
+  color: var(--text-muted);
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+
+/* === 표 === */
+table.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+table.doc-table th, table.doc-table td {
+  border: 1px solid var(--border-medium);
+  padding: 9px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+table.doc-table th {
+  background: var(--bg-sidebar);
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+  font-size: 12.5px;
+}
+
+table.doc-table td.label {
+  background: #f7f6fa;
+  font-weight: 500;
+  width: 28%;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  color: var(--text-secondary);
+}
+
+table.doc-table .code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+/* === 우측 인포박스 === */
+.infobox-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.infobox {
+  background: var(--bg-infobox);
+  border: 1px solid var(--border-medium);
+  position: relative;
+  font-size: 12px;
+  box-shadow: 4px 4px 0 -1px rgba(20, 20, 28, 0.16);
+}
+
+.infobox-header {
+  background: var(--bg-header);
+  color: #fff;
+  padding: 9px 12px;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.infobox-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to right,
+    transparent 0, transparent 3px,
+    rgba(255,255,255,0.04) 3px, rgba(255,255,255,0.04) 4px
+  );
+  pointer-events: none;
+}
+
+.infobox-header .code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #b0b0b8;
+  font-weight: 400;
+  letter-spacing: 0.4px;
+  text-transform: lowercase;
+  position: relative;
+  z-index: 1;
+}
+
+.infobox-body { padding: 12px 14px; }
+
+.infobox-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px dotted var(--border-soft);
+  gap: 8px;
+  font-size: 11.5px;
+}
+
+.infobox-row:last-child { border-bottom: 0; padding-bottom: 0; }
+
+.infobox-row .key {
+  color: var(--text-secondary);
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-weight: 500;
+}
+
+.infobox-row .val {
+  color: var(--text-primary);
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.infobox-row .val.danger { color: var(--warning); font-weight: 600; }
+.infobox-row .val.success { color: var(--success); }
+
+/* === CRT 식별 카드 === */
+.infobox-image {
+  background: linear-gradient(135deg, #25252c 0%, #15151a 100%);
+  height: 185px;
+  position: relative;
+  overflow: hidden;
+  color: #b0b0b8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  display: flex;
+  align-items: flex-end;
+  padding: 8px 10px;
+}
+
+.infobox-image::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0, transparent 2px,
+      rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 3px
+    ),
+    radial-gradient(ellipse at 35% 45%, rgba(140, 150, 165, 0.4) 0%, transparent 65%);
+}
+
+.infobox-image::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 1px;
+  background: rgba(190, 195, 205, 0.5);
+  animation: scan 4s linear infinite;
+  box-shadow: 0 0 4px rgba(190, 195, 205, 0.4);
+}
+
+@keyframes scan {
+  0% { transform: translateY(-95px); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(95px); opacity: 0; }
+}
+
+.infobox-image .corner-mark {
+  position: absolute;
+  top: 8px; right: 10px;
+  color: var(--terminal-green);
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  z-index: 1;
+}
+.infobox-image .corner-mark::before {
+  content: '● REC';
+  animation: pulse-dot 2s infinite;
+}
+
+.infobox-image .corner-mark-tl {
+  position: absolute;
+  top: 8px; left: 10px;
+  color: #9a9aa2;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  z-index: 1;
+}
+
+.infobox-image .crt-clock {
+  position: absolute;
+  top: 30px; left: 10px;
+  color: var(--terminal-green);
+  font-size: 19px;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 8px rgba(109, 191, 109, 0.6), 0 0 2px rgba(109, 191, 109, 0.8);
+  z-index: 1;
+  animation: clock-flicker 5s infinite;
+}
+
+@keyframes clock-flicker {
+  0%, 96%, 100% { opacity: 1; }
+  97% { opacity: 0.4; }
+  98% { opacity: 1; }
+}
+
+.infobox-image .crt-clock .date {
+  display: block;
+  font-size: 9px;
+  color: #9a9aa2;
+  letter-spacing: 0.5px;
+  text-shadow: none;
+  margin-top: 1px;
+}
+
+.infobox-image .signal-bars {
+  position: absolute;
+  top: 34px; right: 10px;
+  display: flex;
+  gap: 2px;
+  align-items: flex-end;
+  z-index: 1;
+}
+
+.infobox-image .signal-bars .bar {
+  width: 3px;
+  background: var(--terminal-green);
+  opacity: 0.85;
+}
+.infobox-image .signal-bars .bar:nth-child(1) { height: 4px; }
+.infobox-image .signal-bars .bar:nth-child(2) { height: 7px; }
+.infobox-image .signal-bars .bar:nth-child(3) { height: 10px; }
+.infobox-image .signal-bars .bar:nth-child(4) { height: 13px; opacity: 0.4; }
+.infobox-image .signal-bars .bar:nth-child(5) { height: 16px; opacity: 0.2; }
+
+.infobox-image .label {
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.5px;
+  color: #cccdd5;
+}
+
+.infobox-image .static {
+  position: absolute;
+  bottom: 26px; left: 10px; right: 10px;
+  font-size: 9px;
+  color: rgba(190, 195, 205, 0.5);
+  letter-spacing: 0.5px;
+  z-index: 1;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.infobox-image .mini-readout {
+  position: absolute;
+  bottom: 10px; right: 10px;
+  font-size: 8.5px;
+  color: var(--terminal-amber);
+  z-index: 1;
+  letter-spacing: 0.3px;
+  text-align: right;
+  line-height: 1.3;
+}
+
+/* === 변칙성 강도 게이지 (신규) === */
+.anomaly-gauge {
+  background: var(--bg-infobox);
+  border: 1px solid var(--border-medium);
+  font-size: 11.5px;
+  box-shadow: 4px 4px 0 -1px rgba(20, 20, 28, 0.16);
+}
+
+.anomaly-gauge .ag-body { padding: 12px 14px; }
+
+.gauge-row { margin-bottom: 8px; }
+.gauge-row:last-child { margin-bottom: 0; }
+
+.gauge-row .gauge-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  margin-bottom: 3px;
+}
+.gauge-row .gauge-label .name {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.gauge-row .gauge-label .val { color: var(--accent); }
+
+.gauge-row .bar-track {
+  height: 8px;
+  background: #2a2a35;
+  position: relative;
+  overflow: hidden;
+}
+
+.gauge-row .bar-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--accent), var(--accent-glow));
+  position: relative;
+}
+
+.gauge-row .bar-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to right,
+    transparent 0, transparent 4px,
+    rgba(255,255,255,0.15) 4px, rgba(255,255,255,0.15) 5px
+  );
+}
+
+.gauge-row.danger .bar-fill {
+  background: linear-gradient(to right, var(--warning), #e07060);
+}
+
+/* === Status 위젯 === */
+.status-widget {
+  background: var(--terminal-bg);
+  color: #c0c0d0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  padding: 11px 13px;
+  border: 1px solid #2a2a35;
+  box-shadow: 4px 4px 0 -1px rgba(20, 20, 28, 0.16);
+}
+
+.status-widget .head {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 7px;
+  border-bottom: 1px solid #2a2a35;
+  margin-bottom: 7px;
+  color: var(--terminal-green);
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.status-widget .line {
+  padding: 2px 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.status-widget .line span:first-child { color: #8080a0; }
+.status-widget .line .ok { color: var(--terminal-green); }
+
+.status-widget .blink { animation: blink 1.6s infinite; }
+@keyframes blink { 50% { opacity: 0.25; } }
+
+/* === 활동 모니터 === */
+.activity-monitor {
+  background: var(--terminal-bg);
+  color: #c0c0d0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  padding: 11px 13px;
+  border: 1px solid #2a2a35;
+  box-shadow: 4px 4px 0 -1px rgba(20, 20, 28, 0.16);
+}
+
+.activity-monitor .am-head {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 7px;
+  border-bottom: 1px solid #2a2a35;
+  margin-bottom: 9px;
+  color: var(--terminal-green);
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.activity-monitor .am-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 9.5px;
+}
+.activity-monitor .am-label span:first-child { color: #8080a0; }
+.activity-monitor .am-label span:last-child { color: var(--terminal-green); }
+
+.activity-monitor .wave {
+  height: 36px;
+  position: relative;
+  background:
+    repeating-linear-gradient(
+      to right,
+      transparent 0, transparent 9px,
+      rgba(109, 191, 109, 0.06) 9px, rgba(109, 191, 109, 0.06) 10px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0, transparent 7px,
+      rgba(109, 191, 109, 0.06) 7px, rgba(109, 191, 109, 0.06) 8px
+    );
+  overflow: hidden;
+  border: 1px solid #2a2a35;
+}
+
+.activity-monitor .wave svg { width: 100%; height: 100%; }
+
+.activity-monitor .am-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 7px;
+  font-size: 9px;
+  color: #7575a0;
+  letter-spacing: 0.4px;
+}
+
+/* === 떠다니는 토스트 알림 (페이지 우측 하단) === */
+.toast-stack {
+  position: fixed;
+  bottom: 28px; right: 22px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--terminal-bg);
+  border: 1px solid var(--bg-dark-panel-edge);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #cccdd5;
+  width: 280px;
+  box-shadow: 4px 4px 0 -1px rgba(0,0,0,0.4), 0 0 0 1px rgba(104, 73, 187, 0.15);
+  pointer-events: auto;
+  animation: toast-in 0.4s ease-out;
+}
+
+@keyframes toast-in {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.toast .t-bar {
+  background: linear-gradient(to right, var(--bg-header), var(--bg-dark-panel-edge));
+  padding: 3px 8px;
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  color: #b0b0b8;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--bg-dark-panel-edge);
+}
+
+.toast .t-bar .x {
+  width: 13px; height: 13px;
+  background: #d4d4d8;
+  border: 1px solid #15151a;
+  font-size: 9px;
+  color: #15151a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.toast .t-body {
+  padding: 8px 10px;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.toast .t-body .icon {
+  color: var(--terminal-amber);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.toast .t-body .icon.info { color: var(--terminal-cyan); }
+
+.toast .t-foot {
+  font-size: 9px;
+  color: #7575a0;
+  padding: 2px 10px 6px;
+  letter-spacing: 0.3px;
+}
+
+/* === 푸터 위 시스템 콘솔 === */
+.system-console {
+  background: var(--terminal-bg-darker);
+  border-top: 1px solid #2a2a35;
+  padding: 12px 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: #b0b0c0;
+  margin-top: 18px;
+}
+
+.system-console .console-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.system-console .console-head {
+  color: var(--terminal-green);
+  font-size: 9.5px;
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.system-console .console-line {
+  padding: 1.5px 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.system-console .console-line .ts { color: #7575a0; font-size: 9.5px; }
+.system-console .console-line .ok { color: var(--terminal-green); }
+.system-console .console-line .warn { color: var(--terminal-amber); }
+.system-console .console-line .err { color: #e07060; }
+.system-console .console-line .arrow { color: #6a6a76; }
+
+/* === 푸터 === */
+.page-footer {
+  background: var(--terminal-bg);
+  color: #8a8a92;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  padding: 16px 24px;
+  border-top: 2px solid var(--bg-dark-panel-edge);
+  margin-top: 0;
+}
+
+.page-footer .inner {
+  max-width: 1320px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.page-footer .glitch-line { color: var(--accent-glow); letter-spacing: 0.5px; }
+.page-footer a { color: #b0b0b8; text-decoration: none; margin: 0 2px; }
+.page-footer a:hover { color: #fff; }
+
+/* === Win98 픽셀 아이콘 공통 === */
+.pixel-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  flex-shrink: 0;
+}
+
+.pixel-icon.lg {
+  width: 24px;
+  height: 24px;
+}
+
+.pixel-icon.sm {
+  width: 14px;
+  height: 14px;
+}
+
+/* === Win98 베벨 강화 : record 다이얼로그 === */
+.record {
+  background: #d8d4e0;
+  border: 0 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #6a6478,
+    inset 2px 2px 0 -1px #e8e4f0,
+    inset -2px -2px 0 -1px #908a9c,
+    4px 4px 0 -1px rgba(20, 20, 28, 0.32) !important;
+}
+
+.record .window-bar {
+  padding: 3px 4px 3px 8px;
+}
+
+.record .window-bar .controls .btn {
+  width: 16px; height: 14px;
+  background: #c0bcc8;
+  border: 0;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040;
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.record .window-bar .controls .btn:active {
+  box-shadow:
+    inset -1px -1px 0 #ffffff,
+    inset 1px 1px 0 #404040;
+}
+
+/* === Win98 베벨 강화 : system-notice 다이얼로그 === */
+.system-notice {
+  background: #d8d4e0 !important;
+  color: #1a1a1f !important;
+  border: 0 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #6a6478,
+    inset 2px 2px 0 -1px #e8e4f0,
+    inset -2px -2px 0 -1px #908a9c,
+    4px 4px 0 -1px rgba(20, 20, 28, 0.32) !important;
+}
+
+.system-notice .notice-bar {
+  padding: 3px 4px 3px 8px;
+}
+
+.system-notice .notice-bar .controls .btn,
+.system-notice .notice-bar .x {
+  width: 16px; height: 14px;
+  background: #c0bcc8;
+  border: 0;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040;
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.system-notice .notice-body {
+  color: #1a1a1f;
+}
+
+.system-notice .notice-buttons button {
+  background: #c0bcc8 !important;
+  border: 0 !important;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040 !important;
+  color: #000 !important;
+  padding: 4px 18px !important;
+  font-family: 'IBM Plex Sans KR', sans-serif !important;
+  font-weight: 500;
+  min-width: 70px;
+}
+
+.system-notice .notice-buttons button:active {
+  box-shadow:
+    inset -1px -1px 0 #ffffff,
+    inset 1px 1px 0 #404040 !important;
+}
+
+/* === Win98 베벨 강화 : 토스트 === */
+.toast {
+  border: 0 !important;
+  box-shadow:
+    inset 1px 1px 0 #7a7a85,
+    inset -1px -1px 0 #100a20,
+    4px 4px 0 -1px rgba(0,0,0,0.45),
+    0 0 0 1px rgba(104, 73, 187, 0.15) !important;
+}
+
+.toast .t-bar .x {
+  width: 15px; height: 13px;
+  background: #c0bcc8;
+  border: 0;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040;
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* === Win98 작업 표시줄 === */
+.win98-taskbar {
+  background: #c0bcc8;
+  padding: 3px 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 11.5px;
+  position: relative;
+  z-index: 5;
+  box-shadow: inset 0 1px 0 #ffffff;
+  border-top: 1px solid #908a9c;
+}
+
+.win98-taskbar .start-btn {
+  background: #c0bcc8;
+  border: 0;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040;
+  padding: 3px 8px 3px 5px;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+}
+
+.win98-taskbar .start-btn:active {
+  box-shadow:
+    inset -1px -1px 0 #ffffff,
+    inset 1px 1px 0 #404040;
+}
+
+.win98-taskbar .task-divider {
+  width: 1px;
+  height: 22px;
+  background: #908a9c;
+  box-shadow: 1px 0 0 #ffffff;
+  margin: 0 4px;
+}
+
+.win98-taskbar .task-items {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.win98-taskbar .task-item {
+  background: #c0bcc8;
+  border: 0;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040;
+  padding: 3px 10px 3px 6px;
+  font-size: 11px;
+  color: #000;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 220px;
+  height: 24px;
+  cursor: pointer;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+}
+
+.win98-taskbar .task-item.active {
+  background: #a8a4b4;
+  box-shadow:
+    inset -1px -1px 0 #ffffff,
+    inset 1px 1px 0 #404040;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255,255,255,0.15) 0px, rgba(255,255,255,0.15) 1px,
+    transparent 1px, transparent 3px
+  );
+}
+
+.win98-taskbar .task-item .label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.win98-taskbar .tray {
+  background: #c0bcc8;
+  box-shadow:
+    inset 1px 1px 0 #404040,
+    inset -1px -1px 0 #ffffff;
+  padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+}
+
+.win98-taskbar .tray .tray-icon {
+  display: flex;
+  align-items: center;
+}
+
+.win98-taskbar .tray .clock {
+  color: #000;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 0 2px;
+}
+
+/* === 콘텐츠 헤더 옆 문서 아이콘 자리 === */
+.doc-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.doc-title-row .doc-pixel-icon {
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+/* === attachment 박스의 픽셀 아이콘 자리 === */
+.attachment .meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.attachment .meta .meta-text {
+  flex: 1;
+  min-width: 0;
+}
+
+/* === 사이드바 메뉴 아이콘 === */
+.sidebar-section li a {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+}
+.sidebar-section li.sub a { padding-left: 22px !important; }
+
+/* === 인포박스 헤더 픽셀 아이콘 === */
+.infobox-header .pixel-icon {
+  margin-right: 4px;
+}
+
+/* === 아날로그 호러 : 페이지 전체 VHS 트래킹 글리치 === */
+.vhs-tracking {
+  position: fixed;
+  left: 0; right: 0;
+  height: 20px;
+  top: -20px;
+  background:
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(180, 160, 230, 0.05) 20%,
+      rgba(229, 217, 250, 0.16) 50%,
+      rgba(180, 160, 230, 0.05) 80%,
+      transparent 100%
+    );
+  pointer-events: none;
+  z-index: 997;
+  mix-blend-mode: screen;
+  animation: vhs-roll 13s linear infinite;
+  filter: blur(0.5px);
+}
+
+@keyframes vhs-roll {
+  0% { top: -20px; opacity: 0; }
+  4% { opacity: 1; }
+  22% { top: 100%; opacity: 1; }
+  23% { top: 100%; opacity: 0; }
+  100% { top: -20px; opacity: 0; }
+}
+
+/* === 아날로그 호러 : 미식별 캡처 증거 박스 === */
+.evidence-block {
+  margin: 24px 0;
+  background: #0a0a10;
+  padding: 14px;
+  border: 1px solid #322659;
+  position: relative;
+  box-shadow:
+    inset 0 0 0 1px rgba(180, 160, 230, 0.08),
+    6px 6px 0 -1px rgba(50, 38, 89, 0.45),
+    0 0 30px rgba(20, 20, 28, 0.22);
+}
+
+.evidence-block::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(
+    180deg,
+    rgba(212, 114, 168, 0.15) 0%,
+    transparent 8%,
+    transparent 92%,
+    rgba(95, 184, 196, 0.15) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.evidence-block .ev-bar {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #9a9aa2;
+  padding: 0 2px 9px;
+  display: flex;
+  justify-content: space-between;
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+}
+
+.evidence-block .ev-bar .src { color: #b0b0b8; }
+.evidence-block .ev-bar .reclive { color: var(--warning); }
+.evidence-block .ev-bar .reclive::before {
+  content: '● REC ';
+  animation: pulse-dot 1.4s infinite;
+}
+
+.evidence-block .crt-frame {
+  height: 340px;
+  background:
+    radial-gradient(ellipse at 50% 70%, rgba(70, 50, 110, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(30, 22, 55, 0.7) 0%, #08080e 80%);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #1f1638;
+  box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
+}
+
+.evidence-block .silhouette {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  width: 130px;
+  height: 280px;
+  transform: translateX(-50%);
+  background:
+    radial-gradient(ellipse 28px 30px at 50% 38px, rgba(10, 8, 18, 0.95) 0%, transparent 65%),
+    radial-gradient(ellipse 55px 85px at 50% 140px, rgba(10, 8, 18, 0.85) 0%, transparent 70%),
+    radial-gradient(ellipse 75px 110px at 50% 230px, rgba(10, 8, 18, 0.75) 0%, transparent 70%);
+  filter: blur(6px);
+  opacity: 0.75;
+  animation: silhouette-breathe 5s ease-in-out infinite;
+}
+
+@keyframes silhouette-breathe {
+  0%, 100% { opacity: 0.65; filter: blur(6px); }
+  50% { opacity: 0.85; filter: blur(5px); }
+}
+
+.evidence-block .crt-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0, transparent 2px,
+    rgba(255,255,255,0.05) 2px, rgba(255,255,255,0.05) 3px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.evidence-block .crt-frame::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 38px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(229, 217, 250, 0.22) 40%,
+    rgba(229, 217, 250, 0.4) 50%,
+    rgba(229, 217, 250, 0.22) 60%,
+    transparent
+  );
+  animation: ev-track 7s linear infinite;
+  pointer-events: none;
+  z-index: 3;
+  filter: blur(1px);
+}
+
+@keyframes ev-track {
+  0% { transform: translateY(-50px); }
+  100% { transform: translateY(380px); }
+}
+
+.evidence-block .frame-tl,
+.evidence-block .frame-tr,
+.evidence-block .frame-bl,
+.evidence-block .frame-br {
+  position: absolute;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  z-index: 4;
+}
+
+.evidence-block .frame-tl { top: 11px; left: 13px; color: #b0b0b8; }
+.evidence-block .frame-tr { top: 11px; right: 13px; color: var(--warning); }
+.evidence-block .frame-tr::before {
+  content: '● REC ';
+  animation: pulse-dot 1.4s infinite;
+}
+.evidence-block .frame-bl { bottom: 11px; left: 13px; color: #b0b0b8; }
+.evidence-block .frame-br { bottom: 11px; right: 13px; color: var(--terminal-green); }
+
+.evidence-block .frame-caption {
+  position: absolute;
+  bottom: 42px; left: 0; right: 0;
+  text-align: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: rgba(180, 160, 230, 0.6);
+  letter-spacing: 0.6px;
+  z-index: 4;
+}
+
+.evidence-block .frame-flash {
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  transform: translateY(-50%);
+  text-align: center;
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: rgba(255, 230, 230, 0.85);
+  letter-spacing: 4px;
+  z-index: 5;
+  opacity: 0;
+  animation: flash-text 11s infinite;
+  text-shadow: 1.5px 0 0 var(--terminal-magenta), -1.5px 0 0 var(--terminal-cyan);
+  pointer-events: none;
+}
+
+@keyframes flash-text {
+  0%, 100% { opacity: 0; }
+  85% { opacity: 0; }
+  85.4% { opacity: 0.95; }
+  85.6% { opacity: 0.2; }
+  85.9% { opacity: 0.95; }
+  86.5% { opacity: 0; }
+}
+
+.evidence-block .ev-meta {
+  margin-top: 12px;
+  background: #f0eef5;
+  border: 1px solid var(--border-medium);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.evidence-block .ev-meta .row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px dotted var(--border-soft);
+  padding: 3px 0;
+}
+.evidence-block .ev-meta .row:last-of-type { border: 0; }
+.evidence-block .ev-meta .row .k { color: var(--text-muted); }
+.evidence-block .ev-meta .row .v { color: var(--accent); }
+
+.evidence-block .ev-warn {
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
+  color: var(--warning);
+  padding: 8px 13px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  margin-top: 10px;
+  letter-spacing: 0.3px;
+  position: relative;
+  z-index: 1;
+}
+
+.evidence-block .self-ref {
+  text-align: center;
+  margin-top: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.6px;
+  position: relative;
+  z-index: 1;
+  animation: self-ref-pulse 4s ease-in-out infinite;
+}
+
+.evidence-block .self-ref .bracket { color: var(--text-muted); }
+.evidence-block .self-ref .target {
+  color: var(--warning);
+  font-weight: 500;
+  text-shadow: 0.5px 0 0 rgba(212, 114, 168, 0.4), -0.5px 0 0 rgba(95, 184, 196, 0.4);
+}
+
+@keyframes self-ref-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+/* === Webcore/Y2K 강화 : 사이드바 현재 송출 위젯 === */
+.broadcast-widget {
+  background: #0a0a10;
+  border: 0;
+  margin-bottom: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  box-shadow:
+    inset 1px 1px 0 #7a7a85,
+    inset -1px -1px 0 #0a0a0e,
+    3px 3px 0 -1px rgba(20, 20, 28, 0.32);
+}
+
+.broadcast-widget .bc-head {
+  background: linear-gradient(to right, #2a2a32, #14141a);
+  color: #b0b0b8;
+  padding: 4px 8px;
+  font-size: 9.5px;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #3a3a44;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.broadcast-widget .bc-head .live { color: var(--warning); }
+.broadcast-widget .bc-head .live::before {
+  content: '● ON AIR ';
+  animation: pulse-dot 1.4s infinite;
+}
+
+.broadcast-widget .bc-screen {
+  height: 86px;
+  background: radial-gradient(ellipse at center, #25252c 0%, #08080e 80%);
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid #1a1a22;
+}
+
+.broadcast-widget .bc-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0, transparent 2px,
+    rgba(255,255,255,0.06) 2px, rgba(255,255,255,0.06) 3px
+  );
+  pointer-events: none;
+}
+
+.broadcast-widget .bc-screen::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 1px;
+  background: rgba(190, 195, 205, 0.4);
+  animation: scan 4s linear infinite;
+}
+
+.broadcast-widget .bc-screen .center-shape {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 35px;
+  height: 55px;
+  background:
+    radial-gradient(ellipse 10px 11px at 50% 12px, rgba(10, 8, 18, 0.95) 0%, transparent 70%),
+    radial-gradient(ellipse 18px 25px at 50% 35px, rgba(10, 8, 18, 0.8) 0%, transparent 70%);
+  filter: blur(3px);
+  opacity: 0.7;
+  animation: silhouette-breathe 5s ease-in-out infinite;
+}
+
+.broadcast-widget .bc-screen .signal {
+  position: absolute;
+  top: 5px; left: 0; right: 0;
+  text-align: center;
+  font-size: 8.5px;
+  color: rgba(190, 195, 205, 0.55);
+  letter-spacing: 0.4px;
+}
+
+.broadcast-widget .bc-info {
+  padding: 6px 9px 7px;
+  font-size: 10px;
+  color: #b0b0b8;
+}
+
+.broadcast-widget .bc-info .row {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.5px 0;
+}
+.broadcast-widget .bc-info .row .k { color: #757582; }
+.broadcast-widget .bc-info .row .v { color: var(--terminal-green); }
+
+/* === Webcore/Y2K 강화 : 방문자 카운터 === */
+.visitor-counter {
+  background: var(--bg-paper);
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #66666c,
+    2px 2px 0 -1px rgba(20, 20, 28, 0.16);
+  margin-bottom: 12px;
+  padding: 9px 10px;
+  text-align: center;
+}
+
+.visitor-counter .vc-label {
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 9.5px;
+  color: var(--text-secondary);
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.visitor-counter .vc-digits {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+}
+
+.visitor-counter .vc-digit {
+  width: 18px;
+  height: 24px;
+  background: #0a0a10;
+  color: var(--terminal-green);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 17px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 1px 1px 0 #2a2a35,
+    inset -1px -1px 0 #050508;
+  text-shadow: 0 0 5px var(--terminal-green);
+}
+
+.visitor-counter .vc-digit.dim {
+  color: #1a3a1a;
+  text-shadow: none;
+}
+
+.visitor-counter .vc-foot {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  letter-spacing: 0.4px;
+}
+
+/* === 88x31 웹배너 줄 (Webcore 클래식) === */
+.web-rings {
+  background: #c8c4d0;
+  padding: 12px 24px 14px;
+  border-top: 1px solid #908a9c;
+  box-shadow: inset 0 1px 0 #ffffff;
+}
+
+.web-rings .wr-inner {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.web-rings .wr-title {
+  font-family: 'IBM Plex Sans KR', sans-serif;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+  text-align: center;
+  letter-spacing: 0.7px;
+  margin-bottom: 9px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.web-rings .wr-banners {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  justify-content: center;
+}
+
+.web-ring-banner {
+  width: 88px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 0.3px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    inset 1px 1px 0 rgba(255,255,255,0.3),
+    inset -1px -1px 0 rgba(0,0,0,0.4),
+    1px 1px 0 rgba(0,0,0,0.2);
+  cursor: pointer;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  line-height: 1.15;
+  font-weight: 500;
+  image-rendering: pixelated;
+}
+
+.web-ring-banner:hover { transform: translate(-1px, -1px); transition: transform 0.1s; }
+
+.web-ring-banner.b1 { background: linear-gradient(135deg, #322659, #15102a); }
+.web-ring-banner.b2 { background: linear-gradient(135deg, #38383f, #1a1a20); border: 1px solid #6dbf6d; color: #6dbf6d; }
+.web-ring-banner.b3 { background: #0a0a10; color: #b0b0b8; border: 1px solid #44444c; }
+.web-ring-banner.b4 { background: repeating-linear-gradient(45deg, #2a2a32 0, #2a2a32 4px, #44444c 4px, #44444c 8px); }
+.web-ring-banner.b5 { background: linear-gradient(to right, #14141a, #38383f, #14141a); }
+.web-ring-banner.b6 { background: #d472a8; color: #15151a; }
+.web-ring-banner.b7 { background: #5fb8c4; color: #15151a; }
+.web-ring-banner.b8 { background: linear-gradient(180deg, #f0c090 0%, #a8443e 100%); color: #15151a; }
+.web-ring-banner.b9 { background: #6dbf6d; color: #15151a; }
+.web-ring-banner.b10 { background: repeating-linear-gradient(0deg, #2a2a32 0, #2a2a32 2px, #14141a 2px, #14141a 4px); color: #b0b0b8; }
+.web-ring-banner.b11 { background: linear-gradient(135deg, #a8443e, #15151a); }
+.web-ring-banner.b12 { background: #14141a; color: var(--terminal-green); border: 1px dashed #6dbf6d; }
+
+/* === PIP 떠다니는 미니 모니터 === */
+.pip-monitor {
+  position: fixed;
+  bottom: 28px;
+  left: 22px;
+  width: 220px;
+  background: #c0bcc8;
+  z-index: 450;
+  font-family: 'JetBrains Mono', monospace;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040,
+    4px 4px 0 -1px rgba(0,0,0,0.45);
+}
+
+.pip-monitor .pip-bar {
+  background: linear-gradient(to right, #2a2a32, #44444c);
+  color: #b0b0b8;
+  padding: 3px 4px 3px 8px;
+  font-size: 9.5px;
+  letter-spacing: 0.4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #1a1a22;
+}
+
+.pip-monitor .pip-bar .x {
+  width: 14px; height: 12px;
+  background: #c0bcc8;
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow:
+    inset 1px 1px 0 #ffffff,
+    inset -1px -1px 0 #404040;
+}
+
+.pip-monitor .pip-screen {
+  height: 130px;
+  background:
+    radial-gradient(ellipse at 50% 60%, rgba(50, 50, 60, 0.4) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 50%, rgba(20, 20, 28, 0.8) 0%, #08080e 80%);
+  position: relative;
+  overflow: hidden;
+  margin: 4px;
+  border: 1px solid #15151a;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.7);
+}
+
+.pip-monitor .pip-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0, transparent 2px,
+    rgba(255,255,255,0.04) 2px, rgba(255,255,255,0.04) 3px
+  );
+  pointer-events: none;
+}
+
+.pip-monitor .pip-screen::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 1px;
+  background: rgba(190, 195, 205, 0.4);
+  animation: scan 5s linear infinite;
+}
+
+.pip-monitor .pip-screen .pip-shadow {
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 90px;
+  background:
+    radial-gradient(ellipse 15px 12px at 50% 18px, rgba(10, 8, 18, 0.95) 0%, transparent 70%),
+    radial-gradient(ellipse 25px 35px at 50% 55px, rgba(10, 8, 18, 0.85) 0%, transparent 70%);
+  filter: blur(4px);
+  opacity: 0.7;
+  animation: silhouette-breathe 5s ease-in-out infinite;
+}
+
+.pip-monitor .pip-screen .pip-tl {
+  position: absolute;
+  top: 4px; left: 5px;
+  color: var(--warning);
+  font-size: 8px;
+  letter-spacing: 0.4px;
+}
+.pip-monitor .pip-screen .pip-tl::before {
+  content: '● ';
+  animation: pulse-dot 1.4s infinite;
+}
+
+.pip-monitor .pip-screen .pip-tr {
+  position: absolute;
+  top: 4px; right: 5px;
+  color: var(--terminal-green);
+  font-size: 8px;
+  letter-spacing: 0.3px;
+}
+
+.pip-monitor .pip-screen .pip-br {
+  position: absolute;
+  bottom: 4px; right: 5px;
+  color: #b0b0b8;
+  font-size: 8px;
+  letter-spacing: 0.3px;
+}
+
+.pip-monitor .pip-info {
+  padding: 5px 9px 7px;
+  font-size: 9.5px;
+  color: #000;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.pip-monitor .pip-info .row {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* === 픽셀 별/분리자 === */
+.pixel-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 24px 0;
+  color: var(--accent);
+  opacity: 0.65;
+}
+
+.pixel-divider .line {
+  flex: 1;
+  height: 1px;
+  background: repeating-linear-gradient(
+    to right,
+    var(--accent) 0px, var(--accent) 3px,
+    transparent 3px, transparent 6px
+  );
+}
+
+.pixel-divider .star {
+  width: 16px;
+  height: 16px;
+  animation: star-twinkle 3s infinite;
+}
+
+@keyframes star-twinkle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* === 헤더 픽셀 별 장식 === */
+.header-stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.header-stars .h-star {
+  position: absolute;
+  width: 7px; height: 7px;
+  color: rgba(180, 160, 230, 0.55);
+  animation: star-twinkle 3.5s infinite;
+}
+.header-stars .h-star.s1 { top: 18px; left: 28%; animation-delay: 0s; }
+.header-stars .h-star.s2 { top: 50px; left: 50%; animation-delay: 1.2s; }
+.header-stars .h-star.s3 { top: 24px; left: 64%; animation-delay: 0.4s; }
+.header-stars .h-star.s4 { top: 60px; left: 36%; animation-delay: 2s; }
+.header-stars .h-star.s5 { top: 38px; left: 78%; animation-delay: 0.8s; }
+
+/* === 문서 끝 라인 + 깜빡이는 커서 === */
+.tail-line {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--text-muted);
+  text-align: right;
+  margin-top: 26px;
+  letter-spacing: 0.5px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-soft);
+}
+
+.tail-line .glitch {
+  background: #15151a;
+  color: var(--terminal-green);
+  padding: 1px 5px;
+  margin: 0 2px;
+  font-size: 10px;
+}
+
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 12px;
+  background: var(--terminal-green);
+  vertical-align: middle;
+  margin-left: 2px;
+  animation: blink-cursor 1s steps(2) infinite;
+}
+
+@keyframes blink-cursor {
+  50% { opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- 부팅 오버레이 -->
+<div class="boot-overlay">
+  <div class="boot-line"><span class="dim">[00:00.001]</span> APMB.terminal v2026.05.21 init...</div>
+  <div class="boot-line"><span class="dim">[00:00.087]</span> loading kernel modules <span class="ok">[OK]</span></div>
+  <div class="boot-line"><span class="dim">[00:00.142]</span> mounting /var/secure <span class="ok">[OK]</span></div>
+  <div class="boot-line"><span class="dim">[00:00.213]</span> establishing tunnel : SEOUL-04 <span class="ok">[OK]</span></div>
+  <div class="boot-line"><span class="dim">[00:00.298]</span> tls handshake <span class="ok">[OK]</span></div>
+  <div class="boot-line"><span class="dim">[00:00.402]</span> verifying credentials : RS-AUTHENTICATED <span class="ok">[OK]</span></div>
+  <div class="boot-line"><span class="dim">[00:00.512]</span> fetching document : APMB-DOC-0341 ...</div>
+  <div class="boot-line"><span class="dim">[00:00.687]</span> redaction layer : <span class="amber">QA-C absent</span> · partial mask applied</div>
+  <div class="boot-line"><span class="dim">[00:00.802]</span> echo signature ████████ detected on sub-channel <span class="amber">[WARN]</span></div>
+  <div class="boot-line"><span class="dim">[00:00.921]</span> render.complete <span class="ok">[OK]</span></div>
+  <div class="boot-line"><span class="dim">[00:01.050]</span> initializing widgets · 12 modules <span class="ok">[OK]</span></div>
+  <div class="boot-line"><span class="dim">[00:01.180]</span> attaching observer : 0341.watcher <span class="ok">[OK]</span></div>
+  <div class="boot-line"><span class="dim">[00:01.320]</span> ......</div>
+  <div class="boot-line"><span class="amber">[00:01.55█]</span> welcome back, ████████.</div>
+</div>
+
+<!-- SVG 그레인 노이즈 -->
+<div class="grain"></div>
+
+<!-- 흐르는 데이터 스트림 -->
+<div class="data-stream-bar">
+  <div class="stream">
+    <span class="ok">[OK]</span> 0341.sync 22:13:██ · packet ████ · echo +0.04dB · <span class="hot">[WARN]</span> sub-channel ghost ████████ · <span class="ok">[OK]</span> integrity PASS · session 7F2A-██ · uptime 41:12:██ · node SE-04 alive · <span class="ok">[OK]</span> render.complete · 4 widgets · 2 records · <span class="ok">[OK]</span> 0341.sync 22:13:██ · packet ████ · echo +0.04dB · <span class="hot">[WARN]</span> sub-channel ghost ████████ · <span class="ok">[OK]</span> integrity PASS · session 7F2A-██ · uptime 41:12:██ · node SE-04 alive
+  </div>
+</div>
+
+<!-- 상단 시스템 바 -->
+<div class="system-bar">
+  <div class="group">
+    <span><span class="status-dot"></span>SECURE / TLS 1.3</span>
+    <span class="sysbar-divider">|</span>
+    <span>SESSION : 7F2A-██-31</span>
+    <span class="sysbar-divider">|</span>
+    <span>NODE : APMB-NET / SEOUL-04</span>
+    <span class="sysbar-divider">|</span>
+    <span>LATENCY : 14ms</span>
+  </div>
+  <div class="group">
+    <span>USER : <span style="color:#fff">RS-AUTHENTICATED</span></span>
+    <span class="sysbar-divider">|</span>
+    <span>UPTIME : 41:12:██</span>
+    <span class="sysbar-divider">|</span>
+    <span>2026-05-25 / 22:13:██</span>
+  </div>
+</div>
+
+<!-- 메인 헤더 -->
+<header class="main-header">
+  <!-- 헤더 픽셀 별 장식 -->
+  <div class="header-stars">
+    <svg class="h-star s1" viewBox="0 0 7 7" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="0" width="1" height="2" fill="currentColor"/>
+      <rect x="3" y="5" width="1" height="2" fill="currentColor"/>
+      <rect x="0" y="3" width="2" height="1" fill="currentColor"/>
+      <rect x="5" y="3" width="2" height="1" fill="currentColor"/>
+      <rect x="2" y="2" width="3" height="3" fill="currentColor"/>
+    </svg>
+    <svg class="h-star s2" viewBox="0 0 7 7" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="0" width="1" height="2" fill="currentColor"/>
+      <rect x="3" y="5" width="1" height="2" fill="currentColor"/>
+      <rect x="0" y="3" width="2" height="1" fill="currentColor"/>
+      <rect x="5" y="3" width="2" height="1" fill="currentColor"/>
+      <rect x="2" y="2" width="3" height="3" fill="currentColor"/>
+    </svg>
+    <svg class="h-star s3" viewBox="0 0 7 7" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="0" width="1" height="2" fill="currentColor"/>
+      <rect x="3" y="5" width="1" height="2" fill="currentColor"/>
+      <rect x="0" y="3" width="2" height="1" fill="currentColor"/>
+      <rect x="5" y="3" width="2" height="1" fill="currentColor"/>
+      <rect x="2" y="2" width="3" height="3" fill="currentColor"/>
+    </svg>
+    <svg class="h-star s4" viewBox="0 0 7 7" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="0" width="1" height="2" fill="currentColor"/>
+      <rect x="3" y="5" width="1" height="2" fill="currentColor"/>
+      <rect x="0" y="3" width="2" height="1" fill="currentColor"/>
+      <rect x="5" y="3" width="2" height="1" fill="currentColor"/>
+      <rect x="2" y="2" width="3" height="3" fill="currentColor"/>
+    </svg>
+    <svg class="h-star s5" viewBox="0 0 7 7" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="0" width="1" height="2" fill="currentColor"/>
+      <rect x="3" y="5" width="1" height="2" fill="currentColor"/>
+      <rect x="0" y="3" width="2" height="1" fill="currentColor"/>
+      <rect x="5" y="3" width="2" height="1" fill="currentColor"/>
+      <rect x="2" y="2" width="3" height="3" fill="currentColor"/>
+    </svg>
+  </div>
+  <div class="header-top">
+    <div class="logo-block">
+      <div class="logo-mark">A</div>
+      <div class="logo-text">
+        <div class="name">초상현상관리국</div>
+        <div class="subname">ANOMALOUS PHENOMENA MANAGEMENT BUREAU · APMB</div>
+        <div class="data-stream">// gov.classified // node.SE-04 // build 2026.05.21</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="search-block">
+        <input type="text" placeholder="문서 / 식별코드 검색...">
+      </div>
+      <div class="header-meta">
+        <span class="live">LIVE FEED</span>
+        <span>· 활성 사상체 ███건</span>
+        <span>· 경보 0건</span>
+      </div>
+    </div>
+  </div>
+  <nav class="main-nav">
+    <a href="#">메인</a>
+    <a href="#" class="active">사상체 데이터베이스</a>
+    <a href="#">사건 기록</a>
+    <a href="#">부서 안내</a>
+    <a href="#">대응 지침</a>
+    <a href="#">자료실</a>
+  </nav>
+</header>
+
+<!-- 브레드크럼 -->
+<div class="breadcrumb">
+  <div class="inner">
+    <div>
+      <a href="#">메인</a><span class="sep">/</span>
+      <a href="#">사상체 데이터베이스</a><span class="sep">/</span>
+      <a href="#">위험 등급 : Aj (Ajñāta)</a><span class="sep">/</span>
+      <span>Aj-06-SP-0341</span>
+    </div>
+    <div class="read-stat">
+      읽기 수준 <span class="pill">RS · QA-C</span>
+      <span style="margin-left: 10px;">조회 ██,███회</span>
+    </div>
+  </div>
+</div>
+
+<!-- 페이지 그리드 -->
+<div class="page-wrap">
+
+  <!-- 좌측 사이드바 -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h3>이 문서의 목차 <span class="indicator">5 SEC</span></h3>
+      <ul>
+        <li class="active with-icon">
+          <a href="#sec-1">
+            <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1,4 L1,13 L15,13 L15,5 L7,5 L6,4 Z" fill="#f0c090" stroke="#3a3a44"/>
+              <path d="M3,7 L13,7 L13,13 L3,13 Z" fill="#fafafc" stroke="#3a3a44" stroke-opacity="0.5"/>
+            </svg>
+            §1. 개요
+          </a>
+        </li>
+        <li class="sub with-icon">
+          <a href="#sec-1-1">
+            <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="2" width="7" height="11" fill="#fafafc" stroke="#3a3a44"/>
+              <polygon points="11,2 13,4 11,4" fill="#c0bcc8" stroke="#3a3a44"/>
+              <line x1="5" y1="6" x2="9" y2="6" stroke="#3a3a44"/>
+              <line x1="5" y1="8" x2="9" y2="8" stroke="#3a3a44"/>
+              <line x1="5" y1="10" x2="8" y2="10" stroke="#3a3a44"/>
+            </svg>
+            §1.1 파생 개체
+          </a>
+        </li>
+        <li class="sub with-icon">
+          <a href="#sec-1-2">
+            <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="2" width="7" height="11" fill="#fafafc" stroke="#3a3a44"/>
+              <polygon points="11,2 13,4 11,4" fill="#c0bcc8" stroke="#3a3a44"/>
+              <line x1="5" y1="6" x2="9" y2="6" stroke="#3a3a44"/>
+              <line x1="5" y1="8" x2="9" y2="8" stroke="#3a3a44"/>
+              <line x1="5" y1="10" x2="8" y2="10" stroke="#3a3a44"/>
+            </svg>
+            §1.2 설명
+          </a>
+        </li>
+        <li class="with-icon">
+          <a href="#sec-2">
+            <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="8,2 14,13 2,13" fill="#f0c090" stroke="#3a3a44"/>
+              <rect x="7" y="6" width="2" height="4" fill="#3a3a44"/>
+              <rect x="7" y="11" width="2" height="1" fill="#3a3a44"/>
+            </svg>
+            §2. 변칙 현상
+          </a>
+        </li>
+        <li class="sub with-icon">
+          <a href="#">
+            <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="8" cy="8" r="6" fill="#fafafc" stroke="#3a3a44"/>
+              <rect x="7" y="5" width="2" height="2" fill="#3a3a44"/>
+              <rect x="7" y="8" width="2" height="4" fill="#3a3a44"/>
+            </svg>
+            (1) 정보 강제 노출
+          </a>
+        </li>
+        <li class="sub with-icon">
+          <a href="#">
+            <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="8" cy="8" r="6" fill="#fafafc" stroke="#3a3a44"/>
+              <rect x="7" y="5" width="2" height="2" fill="#3a3a44"/>
+              <rect x="7" y="8" width="2" height="4" fill="#3a3a44"/>
+            </svg>
+            (2) 송출 비저항성
+          </a>
+        </li>
+        <li class="with-icon">
+          <a href="#sec-3">
+            <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5,7 L5,5 Q5,2 8,2 Q11,2 11,5 L11,7" fill="none" stroke="#3a3a44" stroke-width="1.5"/>
+              <rect x="3" y="7" width="10" height="7" fill="#f0c090" stroke="#3a3a44"/>
+              <rect x="7" y="9" width="2" height="3" fill="#3a3a44"/>
+            </svg>
+            §3. 격리 절차
+          </a>
+        </li>
+        <li class="with-icon">
+          <a href="#sec-4">
+            <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="12" height="12" fill="#fafafc" stroke="#3a3a44"/>
+              <polyline points="4,6 6,8 10,4" fill="none" stroke="#5e8a4e" stroke-width="1.5"/>
+              <polyline points="4,11 6,13 10,9" fill="none" stroke="#5e8a4e" stroke-width="1.5"/>
+            </svg>
+            §4. 대응 지침
+          </a>
+        </li>
+        <li class="with-icon">
+          <a href="#sec-5">
+            <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="1" width="9" height="13" fill="#fafafc" stroke="#3a3a44"/>
+              <rect x="6" y="0" width="3" height="3" fill="#3a3a44"/>
+              <line x1="5" y1="5" x2="10" y2="5" stroke="#3a3a44"/>
+              <line x1="5" y1="7" x2="10" y2="7" stroke="#3a3a44"/>
+              <line x1="5" y1="9" x2="10" y2="9" stroke="#3a3a44"/>
+              <line x1="5" y1="11" x2="8" y2="11" stroke="#3a3a44"/>
+            </svg>
+            §5. 사건 기록
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 신규 위젯 : 현재 송출 (Webcore) -->
+    <div class="broadcast-widget">
+      <div class="bc-head">
+        <span>NOW BROADCASTING</span>
+        <span class="live">22:13</span>
+      </div>
+      <div class="bc-screen">
+        <span class="signal">// SP-0341 / channel ████ //</span>
+        <span class="center-shape"></span>
+      </div>
+      <div class="bc-info">
+        <div class="row"><span class="k">시청자</span><span class="v">█████</span></div>
+        <div class="row"><span class="k">신호</span><span class="v">stable</span></div>
+        <div class="row"><span class="k">상태</span><span class="v">ACTIVE</span></div>
+      </div>
+    </div>
+
+    <!-- 신규 위젯 : 방문자 카운터 (Webcore 클래식) -->
+    <div class="visitor-counter">
+      <div class="vc-label">이 문서 누적 조회</div>
+      <div class="vc-digits">
+        <span class="vc-digit dim">0</span>
+        <span class="vc-digit dim">0</span>
+        <span class="vc-digit">2</span>
+        <span class="vc-digit">7</span>
+        <span class="vc-digit">8</span>
+        <span class="vc-digit">3</span>
+        <span class="vc-digit">9</span>
+      </div>
+      <div class="vc-foot">// session 7F2A-██-31</div>
+    </div>
+
+    <!-- 활동 히트맵 (신규) -->
+    <div class="heatmap-widget">
+      <div class="hm-head">
+        <span>ACTIVITY 14D</span>
+        <span class="blink">●</span>
+      </div>
+      <div class="grid">
+        <div class="cell l2"></div><div class="cell l1"></div><div class="cell l3"></div><div class="cell l2"></div><div class="cell l4"></div><div class="cell l3"></div><div class="cell l3"></div>
+        <div class="cell l2"></div><div class="cell l4"></div><div class="cell warn"></div><div class="cell l4"></div><div class="cell l3"></div><div class="cell l2"></div><div class="cell l3"></div>
+        <div class="cell l1"></div><div class="cell l2"></div><div class="cell l3"></div><div class="cell l4"></div><div class="cell l3"></div><div class="cell l4"></div><div class="cell l3"></div>
+        <div class="cell l3"></div><div class="cell l4"></div><div class="cell warn"></div><div class="cell l4"></div><div class="cell l3"></div><div class="cell l4"></div><div class="cell l3"></div>
+      </div>
+      <div class="hm-foot">
+        <span>14일 전</span>
+        <span>오늘</span>
+      </div>
+    </div>
+
+    <div class="alert-log">
+      <div class="alert-head">
+        <span>SYSTEM ALERT.log</span>
+        <span class="blink">●</span>
+      </div>
+      <div class="alert-body">
+        <div class="entry"><span class="ts">22:13</span><span class="tag ok">OK</span>node sync 완료</div>
+        <div class="entry"><span class="ts">22:08</span><span class="tag info">INFO</span>본 문서 갱신 알림</div>
+        <div class="entry"><span class="ts">21:47</span><span class="tag warn">WARN</span>접근 시도 차단 ×3</div>
+        <div class="entry"><span class="ts">21:31</span><span class="tag info">INFO</span>RS 세션 연장</div>
+        <div class="entry"><span class="ts">20:██</span><span class="tag warn">WARN</span>echo ████ 감지</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>관련 사상체 <span class="indicator">3 LINK</span></h3>
+      <ul>
+        <li><a href="#">Aj-██-FG-████</a></li>
+        <li><a href="#">Bh-03-EV-0127</a></li>
+        <li><a href="#">Ks-04-AK-0089</a></li>
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>변경 이력 <span class="indicator">v0.4</span></h3>
+      <div class="changelog-item">
+        <div class="left-col"><span class="ver">v0.4</span> · 2026-05-21<br>격리 절차 갱신</div>
+        <div class="pulse"></div>
+      </div>
+      <div class="changelog-item">
+        <div class="left-col"><span class="ver">v0.3</span> · 2026-04-██<br>파생 개체 -02 추가</div>
+        <div class="pulse old"></div>
+      </div>
+      <div class="changelog-item">
+        <div class="left-col"><span class="ver">v0.2</span> · 2026-██-██<br>위험 등급 재산정</div>
+        <div class="pulse old"></div>
+      </div>
+      <div class="changelog-item">
+        <div class="left-col"><span class="ver">v0.1</span> · 20██-██-██<br>최초 작성</div>
+        <div class="pulse old"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 메인 콘텐츠 -->
+  <main class="content">
+    <div class="content-header">
+      <div class="corner-monitor">
+        <div class="live">DOC ACTIVE</div>
+        <div>read.sync 22:13:██</div>
+      </div>
+      <div class="doc-meta-line">
+        <span class="meta-tag">APMB-DOC-0341</span>
+        <span>최종 갱신 : 2026-05-21</span>
+        <span>버전 v0.4</span>
+        <span>상태 : 진행 중 — 격리 시험</span>
+      </div>
+      <div class="doc-title-row">
+        <svg class="pixel-icon lg doc-pixel-icon" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="1" width="10" height="14" fill="#fafafc" stroke="#3a3a44"/>
+          <polygon points="12,1 15,4 12,4" fill="#c0bcc8" stroke="#3a3a44"/>
+          <line x1="3" y1="5" x2="11" y2="5" stroke="#3a3a44"/>
+          <line x1="3" y1="7" x2="11" y2="7" stroke="#3a3a44"/>
+          <line x1="3" y1="9" x2="11" y2="9" stroke="#3a3a44"/>
+          <line x1="3" y1="11" x2="9" y2="11" stroke="#3a3a44"/>
+          <line x1="3" y1="13" x2="11" y2="13" stroke="#3a3a44"/>
+          <rect x="9" y="9" width="2" height="2" fill="#a8443e"/>
+        </svg>
+        <h1 class="doc-title">
+          <span class="code">Aj-06-SP-0341</span>
+          <span class="glitch-text" data-text="노스포비아">노스포비아</span>
+        </h1>
+      </div>
+      <div class="doc-subtitle">통칭(민간) : 모르는 게 약, 잠들지 않는 방송, ████████</div>
+    </div>
+
+    <div class="warning-banner">
+      <strong>접근 권한 안내.</strong> 본 문서는 보안 등급 RS(Rakṣa) 이상에 한해 정상 열람이 가능합니다. 일부 영역은 자격 인가 QA-C 미보유자에게 자동 검열 표시됩니다. 열람 중 인지 변동·감정 변동이 발생할 경우 즉시 §4 대응 지침을 참조하십시오.
+    </div>
+
+    <div class="doc-body">
+
+      <h2 id="sec-1">
+        <span class="section-num">§1.</span> 개요
+        <span class="section-meta">// OBJ-SUMMARY //</span>
+      </h2>
+
+      <table class="doc-table">
+        <tbody>
+          <tr><td class="label">사상체 명칭</td><td>노스포비아 <span style="color: var(--text-muted); font-size: 11px;">(공식 · 비통칭)</span></td></tr>
+          <tr><td class="label">식별코드</td><td><span class="code">Aj-06-SP-0341</span></td></tr>
+          <tr><td class="label">위험 등급</td><td><strong style="color: var(--warning)">Aj (Ajñāta)</strong> — 정보 부족 · 지침 불충분 · 대량 손실 예상</td></tr>
+          <tr><td class="label">보안 등급</td><td>RS (Rakṣa) 이상</td></tr>
+          <tr><td class="label">자격 인가</td><td><span class="code">QA-C</span> (정신 변칙성 노출 인가)</td></tr>
+          <tr><td class="label">주요 변칙성</td><td>거미 (SP) — 지속 · 저항</td></tr>
+          <tr><td class="label">부차 변칙성</td><td>나방 (MT) / 송곳 (FG)</td></tr>
+        </tbody>
+      </table>
+
+      <div class="inline-sys">
+        <span class="ts">[22:13:██]</span><span class="tag-sys echo">ECHO</span>본 표 갱신 — 격리 절차 v0.4 반영. 차이 확인은 <a href="#" style="color:var(--accent-bright)">diff 보기</a>.
+      </div>
+
+      <h3 id="sec-1-1">파생 개체</h3>
+      <table class="doc-table">
+        <thead>
+          <tr><th style="width: 24%">식별코드</th><th style="width: 22%">유형</th><th>비고</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="code">Aj-06-SP-0341-01</span></td>
+            <td>인간형 지적 개체</td>
+            <td>호명: "노스". 본체와 의사소통 가능한 유일한 파생 개체로 추정된다.</td>
+          </tr>
+          <tr>
+            <td><span class="code">Aj-06-SP-0341-02</span></td>
+            <td>방송 공간 (디지털)</td>
+            <td>실시간 송출 형식. 시청자 누적 수 <span class="censored box">█████</span>명 이상으로 추정된다.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 id="sec-1-2">설명</h3>
+      <p>
+        <strong>Aj-06-SP-0341</strong>("노스포비아")은 디지털 공간 내에 자기 존재를 <em>지속적으로 고정</em>하는 형태로 발현되는 무형(형태 유형 06) 사상체이다. 외형 자체는 식별되지 않으며, 관측 가능한 영역은 본체가 송출하는 <em>방송 공간</em>(파생 개체 -02 <span class="sys-tag">.stream</span>)과 그 안에 출현하는 <em>인간형 지적 개체</em>(파생 개체 -01 <span class="sys-tag">.npc</span>)에 한정된다. 본체의 외관은 사실상 <em>방송 공간이라는 인터페이스</em> 그 자체로 해석된다.
+      </p>
+      <p>
+        최초 식별은 20██년 ██월, <a href="#">기록 [0341-0001]</a>의 민간 제보를 통해 이루어졌다. 이후 약 ██개월에 걸친 관측 끝에 본체의 광역적·비물질적 특성이 확인되어 §3 격리 절차에 따른 시설 신축 결정이 내려졌다.
+      </p>
+      <p>
+        현재 본 사상체는 <span class="censored">████████████</span> 영역에 신축된 디지털 격리 시설 내부에서 운영되고 있다. 본체의 비물질성으로 인해 물리적 확보가 불가능하므로, 격리 시설은 본체가 발생·유지되는 <em>접속 환경 자체</em>를 통제 구역으로 재정의하는 형태로 구축되었다 (격리 방식 원칙 §4.1 참조).
+      </p>
+      <p>
+        본체의 활동 양식은 <strong>지속</strong>을 주된 변칙성으로 한다. 본체는 외부 간섭이나 엔트로피적 소멸에 저항하며 자기 존재의 <em>형식</em>을 보존하려 한다. 보조 변칙성으로서 시청자에 대한 정보 노출(MT)과 감정 증폭(FG)이 관측되며, 이 두 부차 변칙성은 본체의 <em>지속</em>을 유지하기 위한 자기-에너지 공급 메커니즘으로 추정된다.
+      </p>
+
+      <h2 id="sec-2">
+        <span class="section-num">§2.</span> 변칙 현상
+        <span class="section-meta">// ANOMALY-CASES //</span>
+      </h2>
+
+      <div class="inline-sys">
+        <span class="ts">[22:13:██]</span><span class="tag-sys">SYS</span>이하 항목 중 <span class="censored" style="font-size:11px">██████</span> 부분은 QA-C 미보유 시 자동 마스킹됩니다.
+      </div>
+
+      <h3>(1) 시청자 인지 영역에 대한 정보 강제 노출</h3>
+      <p>
+        본체와의 접속이 일정 시간 이상 지속될 경우, 시청자는 본인이 사전에 알 수 없었던 <em>제3자의 신상 정보 · 미상 영상 · 미배포 음원</em> 등을 인지하게 된다. 해당 정보들은 본체의 송출 영역 내에서 자연스럽게 등장하며, 시청자는 그 정보가 자신의 외부에서 주입되었다는 사실을 인식하지 못한다.
+      </p>
+      <p>
+        이 양상은 <span class="censored">█████</span>형 발현으로 분류되며, 부차적으로 송곳(FG)형의 영향이 동반된다.
+      </p>
+
+      <div class="record">
+        <div class="window-bar">
+          <span>record_0341_0007.txt — APMB Notepad</span>
+          <div class="controls"><div class="btn">─</div><div class="btn">□</div><div class="btn">×</div></div>
+        </div>
+        <div class="record-header">
+          기록 <span class="code">[0341-0007]</span> · 면담 발췌 · 시청자 K(31세) · 격리 후 자발 보고
+        </div>
+        <div class="record-body">
+          <p>그 사람 본 적도 없는데, 어느 순간 그 사람 이름이랑 사는 동네까지 다 알게 됐어요. 누가 알려준 건 아니에요. 그냥 알게 됐어요. 그게 무서운 게 아니라, <em>아무도 안 알려줬는데 내가 안다는 게</em> 무서워요.</p>
+        </div>
+      </div>
+
+      <!-- 첨부 자료 박스 (신규) -->
+      <h3>관련 첨부 자료</h3>
+      <div class="attachment-grid">
+        <div class="attachment">
+          <div class="thumb img">
+            <span class="filename-pre">// 0341-0007 capture</span>
+            <span class="corner">22:13:██</span>
+            <div class="scan-static"></div>
+          </div>
+          <div class="meta">
+            <svg class="pixel-icon" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="1" width="9" height="14" fill="#fafafc" stroke="#3a3a44"/>
+              <polygon points="11,1 14,4 11,4" fill="#c0bcc8" stroke="#3a3a44"/>
+              <rect x="5" y="6" width="2" height="5" fill="#3a3a44"/>
+              <rect x="7" y="9" width="2" height="2" fill="#3a3a44"/>
+              <rect x="9" y="6" width="1" height="2" fill="#3a3a44"/>
+            </svg>
+            <div class="meta-text">
+              <span class="fn">k_interview_aud.███</span>
+              <span class="info">오디오 · 14:██ · QA-B</span>
+            </div>
+          </div>
+        </div>
+        <div class="attachment">
+          <div class="thumb img">
+            <span class="filename-pre">// signal trace</span>
+            <span class="corner">REC</span>
+            <div class="scan-static"></div>
+          </div>
+          <div class="meta">
+            <svg class="pixel-icon" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="1" width="9" height="14" fill="#fafafc" stroke="#3a3a44"/>
+              <polygon points="11,1 14,4 11,4" fill="#c0bcc8" stroke="#3a3a44"/>
+              <line x1="3" y1="5" x2="10" y2="5" stroke="#3a3a44"/>
+              <line x1="3" y1="6" x2="10" y2="6" stroke="#3a3a44"/>
+              <rect x="3" y="8" width="2" height="4" fill="#6dbf6d"/>
+              <rect x="6" y="10" width="2" height="2" fill="#6dbf6d"/>
+              <rect x="9" y="7" width="1" height="5" fill="#6dbf6d"/>
+              <line x1="3" y1="12" x2="10" y2="12" stroke="#3a3a44"/>
+            </svg>
+            <div class="meta-text">
+              <span class="fn">stream_anomaly_log.csv</span>
+              <span class="info">로그 · 2.4 MB · RS</span>
+            </div>
+          </div>
+        </div>
+        <div class="attachment">
+          <div class="thumb img locked">
+            <span class="filename-pre">// access denied</span>
+            <span class="corner">QA-C</span>
+            <div class="scan-static"></div>
+          </div>
+          <div class="meta">
+            <svg class="pixel-icon" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5,7 L5,5 Q5,2 8,2 Q11,2 11,5 L11,7" fill="none" stroke="#3a3a44" stroke-width="1.5"/>
+              <rect x="3" y="7" width="10" height="7" fill="#a8443e" stroke="#3a3a44"/>
+              <rect x="7" y="9" width="2" height="3" fill="#3a3a44"/>
+            </svg>
+            <div class="meta-text">
+              <span class="fn">█████████.exe</span>
+              <span class="info">실행파일 · 잠김 · QA-C</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h3>(2) 송출 종료에 대한 비저항성</h3>
+      <p>
+        본체의 송출은 외부에서 강제 종료할 수 있으나, 강제 종료된 송출은 평균 <span class="censored">██</span>분 이내에 동일한 형식으로 재개된다. 재개 시 본체는 직전 종료에 대한 인식을 보이지 않으며, <em>송출이 끊겼다는 사실 자체</em>가 본체의 인지에서 결락된 것으로 추정된다.
+      </p>
+      <p>해당 양상은 거미(SP)형의 핵심 발현 사례로 분류된다.</p>
+
+      <!-- 아날로그 호러 포인트 : 미식별 캡처 증거 박스 -->
+      <div class="evidence-block">
+        <div class="ev-bar">
+          <span class="src">// 0341 — 첨부 자료 #████ (출처 미식별)</span>
+          <span class="reclive">22:13:██</span>
+        </div>
+        <div class="crt-frame">
+          <span class="frame-tl">CAM ██ · 격리시설 ████████</span>
+          <span class="frame-tr">22:13:██</span>
+          <div class="silhouette"></div>
+          <div class="frame-flash">SEEN.</div>
+          <span class="frame-caption">// 외형 자료 없음 — 본체 무형 //</span>
+          <span class="frame-bl">SP-0341 / FEED ████</span>
+          <span class="frame-br">SYNC OK</span>
+        </div>
+        <div class="ev-meta">
+          <div class="row"><span class="k">FILE</span><span class="v">█████████.mp4</span></div>
+          <div class="row"><span class="k">SOURCE</span><span class="v">미확인</span></div>
+          <div class="row"><span class="k">HASH</span><span class="v">0x████████████████</span></div>
+          <div class="row"><span class="k">EXIF</span><span class="v">NULL</span></div>
+          <div class="row"><span class="k">DURATION</span><span class="v">∞ / 종료 미감지</span></div>
+          <div class="row"><span class="k">첨부 시각</span><span class="v">20██-██-██ ██:██:██</span></div>
+          <div class="row"><span class="k">첨부자</span><span class="v">&lt;미확인&gt;</span></div>
+        </div>
+        <div class="ev-warn">
+          ⚠ 본 자료는 §1.1 갱신과 동시에 자동 첨부되었습니다. 첨부 경로는 조사 중이며, 본 문서의 어느 사용자도 업로드 기록을 보유하고 있지 않습니다.
+        </div>
+        <div class="self-ref">
+          <span class="bracket">[</span> <span class="target">당신이 이 자료를 보고 있다는 사실이 기록되었습니다.</span> <span class="bracket">]</span>
+        </div>
+      </div>
+
+      <!-- 본문 침투 가짜 다이얼로그 -->
+      <div class="system-notice">
+        <div class="notice-bar">
+          <span>APMB_ACCESS_NOTICE.exe</span>
+          <div class="controls"><div class="btn">─</div><div class="btn">□</div><div class="btn">×</div></div>
+        </div>
+        <div class="notice-body">
+          <span class="icon">⚠</span>
+          <div>
+            본 페이지의 §3 이하 항목은 <span style="color:var(--terminal-amber)">자격 인가 QA-C 이상</span>에서 완전 열람이 가능합니다. 현재 세션은 RS-AUTHENTICATED 상태이며 일부 영역이 <span style="color:var(--accent-glow)">검열 표시</span>로 대체됩니다. 인가 갱신을 요청하려면 담당 부서 콘솔에 접속하십시오.
+          </div>
+        </div>
+        <div class="notice-buttons">
+          <button>확인</button>
+          <button>인가 요청</button>
+        </div>
+      </div>
+
+      <h2 id="sec-3">
+        <span class="section-num">§3.</span> 격리 절차
+        <span class="section-meta">// CONTAINMENT //</span>
+      </h2>
+      <p>
+        본체는 무형이며 사실상 광역에 걸쳐 있어 물리적 확보가 불가능하다. 따라서 본체에 대한 격리는 <em>본체가 발생·유지되는 디지털 접속 환경 전체를 통제 구역으로 재정의</em>하는 방식을 따른다. 통제 구역의 정확한 위치·범위 정보는 본 문서에서 다루지 않는다 (<span class="sys-tag warn">CLASSIFIED</span> <span class="censored box">████████</span>).
+      </p>
+      <p>
+        격리 절차의 정의·갱신 권한은 연구 개발부에 있으며, 협조 사상체로서의 운영 결정은 관리 행정부 소관이다. 본체는 <a href="#">대응 지침 §4.2</a>에 따른 시청자 노출 한계 내에서 <em>제한적 공개</em>되고 있다.
+      </p>
+
+      <div class="inline-sys">
+        <span class="ts">[20:██:██]</span><span class="tag-sys warn">WARN</span>이 단락은 직전 갱신 이후 <span style="color:var(--warning)">echo 신호</span> ████ 와 함께 갱신되었습니다. 무결성 검증 통과.
+      </div>
+
+      <!-- 픽셀 별 분리자 (Webcore) -->
+      <div class="pixel-divider">
+        <div class="line"></div>
+        <svg class="star" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+          <rect x="7" y="0" width="2" height="3" fill="currentColor"/>
+          <rect x="7" y="13" width="2" height="3" fill="currentColor"/>
+          <rect x="0" y="7" width="3" height="2" fill="currentColor"/>
+          <rect x="13" y="7" width="3" height="2" fill="currentColor"/>
+          <rect x="3" y="3" width="2" height="2" fill="currentColor"/>
+          <rect x="11" y="3" width="2" height="2" fill="currentColor"/>
+          <rect x="3" y="11" width="2" height="2" fill="currentColor"/>
+          <rect x="11" y="11" width="2" height="2" fill="currentColor"/>
+          <rect x="5" y="5" width="6" height="6" fill="currentColor"/>
+        </svg>
+        <div class="line"></div>
+      </div>
+
+      <h2 id="sec-4">
+        <span class="section-num">§4.</span> 대응 지침
+        <span class="section-meta">// PROTOCOL //</span>
+      </h2>
+      <p>대응 지침의 상세 항목은 자격 인가 <span class="code" style="color: var(--accent)">QA-C</span> 이상 보유자에게 공개된다. 다음은 <strong>RS 등급 이상 일반 열람용</strong> 요약이다.</p>
+      <ul>
+        <li>본체와 1회 접속 시 누적 노출 시간은 <strong>██분</strong>을 초과하지 않을 것을 권장한다.</li>
+        <li>접속 종료 직후 인지 영역에 <em>"본 적이 없는데 알게 된"</em> 정보가 발견될 경우, 즉시 <a href="#">보고 양식 K-3</a>을 통해 보고한다.</li>
+        <li>본체가 시청자에게 특정 정보·자료를 <em>전달해 달라고 명시적으로 요구</em>할 경우, 해당 요구를 <strong>수행하지 않으며</strong> 즉시 보고한다.</li>
+        <li>접속 중 본체에 대해 강한 친근감·보호 욕구가 발생할 경우, <a href="#">§4.4 감정 변칙 자기 점검표</a>를 따른다. <span class="censored">██████████████</span>.</li>
+      </ul>
+
+      <!-- 픽셀 별 분리자 -->
+      <div class="pixel-divider">
+        <div class="line"></div>
+        <svg class="star" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+          <rect x="7" y="0" width="2" height="3" fill="currentColor"/>
+          <rect x="7" y="13" width="2" height="3" fill="currentColor"/>
+          <rect x="0" y="7" width="3" height="2" fill="currentColor"/>
+          <rect x="13" y="7" width="3" height="2" fill="currentColor"/>
+          <rect x="3" y="3" width="2" height="2" fill="currentColor"/>
+          <rect x="11" y="3" width="2" height="2" fill="currentColor"/>
+          <rect x="3" y="11" width="2" height="2" fill="currentColor"/>
+          <rect x="11" y="11" width="2" height="2" fill="currentColor"/>
+          <rect x="5" y="5" width="6" height="6" fill="currentColor"/>
+        </svg>
+        <div class="line"></div>
+      </div>
+
+      <h2 id="sec-5">
+        <span class="section-num">§5.</span> 사건 기록
+        <span class="section-meta">// INCIDENT-LOG //</span>
+      </h2>
+
+      <div class="record">
+        <div class="window-bar">
+          <span>record_0341_0001.txt — APMB Notepad</span>
+          <div class="controls"><div class="btn">─</div><div class="btn">□</div><div class="btn">×</div></div>
+        </div>
+        <div class="record-header">
+          기록 <span class="code">[0341-0001]</span> · 최초 식별 · 20██-██-██
+        </div>
+        <div class="record-body">
+          <p>익명의 민간 제보를 통해 본 사상체의 존재가 처음 보고되었다. 제보자는 본체의 송출을 <span class="censored">████</span>일간 시청한 후, 자신이 알 수 없었던 정보가 누적되는 사실을 인지하고 인근 관할 사무국에 자진 출두하였다. 이후 제보자는 <span class="censored">████████</span>.</p>
+        </div>
+      </div>
+
+      <div class="record">
+        <div class="window-bar">
+          <span>record_0341_0014.txt — APMB Notepad</span>
+          <div class="controls"><div class="btn">─</div><div class="btn">□</div><div class="btn">×</div></div>
+        </div>
+        <div class="record-header">
+          기록 <span class="code">[0341-0014]</span> · 격리 후 면담 · 파생 개체 -01과의 1차 접촉
+        </div>
+        <div class="record-body">
+          <p>파생 개체 -01("노스")이 격리 후 최초로 협조적 의사를 표시한 회차. 본체는 자신의 <em>지속 메커니즘</em>에 대해 일부 정보를 자발 제공하였으나, 제공된 정보의 신뢰도는 검증 불가로 분류되었다. 면담 종료 직후 면담관 <span class="censored">██</span>은 자발적으로 본 사상체의 시청자 접속 권한을 신청하였으며, 이는 <a href="#">§4.4 감정 변칙 발생 사례</a>로 등록되어 있다.</p>
+        </div>
+      </div>
+
+      <p class="tail-line">
+        ─ 문서 끝 ─ <span class="glitch">SYNC OK</span> · 동기화 시각 <span class="glitch">22:13:██</span> · 다음 갱신 예정 <span class="glitch">2026-██-██</span><span class="cursor"></span>
+      </p>
+
+    </div>
+  </main>
+
+  <!-- 우측 인포박스 -->
+  <aside class="infobox-column">
+
+    <div class="infobox">
+      <div class="infobox-header">
+        <span>
+          <svg class="pixel-icon" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+            <rect x="1" y="2" width="14" height="10" fill="#c0bcc8" stroke="#fff" stroke-width="0.5"/>
+            <rect x="2" y="3" width="12" height="8" fill="#3a3a44"/>
+            <rect x="3" y="4" width="2" height="1" fill="#6dbf6d"/>
+            <rect x="3" y="6" width="8" height="1" fill="#b0b0b8"/>
+            <rect x="3" y="8" width="6" height="1" fill="#b0b0b8"/>
+            <rect x="5" y="13" width="6" height="1" fill="#c0bcc8" stroke="#fff" stroke-width="0.5"/>
+            <line x1="4" y1="14" x2="12" y2="14" stroke="#fff" stroke-width="0.5"/>
+          </svg>
+          식별 카드
+        </span>
+        <span class="code">0341.dat</span>
+      </div>
+      <div class="infobox-image">
+        <span class="corner-mark-tl">CH 04 · LIVE</span>
+        <span class="corner-mark"></span>
+        <div class="crt-clock">
+          22:13:██
+          <span class="date">2026.05.25 · UTC+09</span>
+        </div>
+        <div class="signal-bars">
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        </div>
+        <div class="mini-readout">
+          ECHO +0.04dB<br>JITTER ██ms
+        </div>
+        <span class="static">// signal trace : ▂▃▅▇▆▄▃▂▁▂▄▆▇▅▃▁ //</span>
+        <span class="label">// 외형 자료 없음 — 본체 무형</span>
+      </div>
+      <div class="infobox-body">
+        <div class="infobox-row"><span class="key">식별코드</span><span class="val">Aj-06-SP-0341</span></div>
+        <div class="infobox-row"><span class="key">위험 등급</span><span class="val danger">Aj</span></div>
+        <div class="infobox-row"><span class="key">형태 유형</span><span class="val">06 / 무형</span></div>
+        <div class="infobox-row"><span class="key">주요 변칙성</span><span class="val">SP · 거미</span></div>
+        <div class="infobox-row"><span class="key">부차 변칙성</span><span class="val">MT, FG</span></div>
+        <div class="infobox-row"><span class="key">보안 등급</span><span class="val">RS 이상</span></div>
+        <div class="infobox-row"><span class="key">자격 인가</span><span class="val">QA-C</span></div>
+        <div class="infobox-row"><span class="key">관리 부서</span><span class="val">연구 · 행정</span></div>
+      </div>
+    </div>
+
+    <!-- 변칙성 강도 게이지 (신규) -->
+    <div class="anomaly-gauge">
+      <div class="infobox-header">
+        <span>변칙성 강도</span>
+        <span class="code">vector.dat</span>
+      </div>
+      <div class="ag-body">
+        <div class="gauge-row danger">
+          <div class="gauge-label"><span class="name">SP · 지속</span><span class="val">87%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width: 87%"></div></div>
+        </div>
+        <div class="gauge-row">
+          <div class="gauge-label"><span class="name">MT · 정보</span><span class="val">52%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width: 52%"></div></div>
+        </div>
+        <div class="gauge-row">
+          <div class="gauge-label"><span class="name">FG · 감정</span><span class="val">41%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width: 41%"></div></div>
+        </div>
+        <div class="gauge-row">
+          <div class="gauge-label"><span class="name">AK · 차단</span><span class="val">08%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width: 8%"></div></div>
+        </div>
+        <div class="gauge-row">
+          <div class="gauge-label"><span class="name">AH · 소거</span><span class="val">██%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width: 14%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="infobox">
+      <div class="infobox-header">
+        <span>
+          <svg class="pixel-icon" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5,7 L5,5 Q5,2 8,2 Q11,2 11,5 L11,7" fill="none" stroke="#fff" stroke-width="1.5"/>
+            <rect x="3" y="7" width="10" height="7" fill="#f0c090" stroke="#fff" stroke-width="0.5"/>
+            <rect x="7" y="9" width="2" height="3" fill="#3a3a44"/>
+          </svg>
+          격리 현황
+        </span>
+        <span class="code">site.log</span>
+      </div>
+      <div class="infobox-body">
+        <div class="infobox-row"><span class="key">상태</span><span class="val success">활성 · 안정</span></div>
+        <div class="infobox-row"><span class="key">격리 형태</span><span class="val">디지털 통제</span></div>
+        <div class="infobox-row"><span class="key">위치</span><span class="val"><span class="censored box">█████</span></span></div>
+        <div class="infobox-row"><span class="key">최종 점검</span><span class="val">2026-05-19</span></div>
+        <div class="infobox-row"><span class="key">접속 권한</span><span class="val">IG 부분 공개</span></div>
+        <div class="infobox-row"><span class="key">이탈 시도</span><span class="val">0 / 30일</span></div>
+      </div>
+    </div>
+
+    <div class="activity-monitor">
+      <div class="am-head">
+        <span>ACTIVITY.MON</span>
+        <span class="blink">●</span>
+      </div>
+      <div class="am-label"><span>본체 활동 진폭</span><span>NORMAL</span></div>
+      <div class="wave">
+        <svg viewBox="0 0 280 36" preserveAspectRatio="none">
+          <polyline fill="none" stroke="#6dbf6d" stroke-width="1"
+            points="0,20 12,18 24,22 36,15 48,19 60,12 72,21 84,14 96,20 108,10 120,18 132,24 144,14 156,19 168,8 180,17 192,21 204,13 216,18 228,11 240,19 252,16 264,20 280,17"/>
+        </svg>
+      </div>
+      <div class="am-foot">
+        <span>min ▁ 0.3</span>
+        <span>avg ▄ 0.7</span>
+        <span>max ▇ 1.1</span>
+      </div>
+    </div>
+
+    <div class="status-widget">
+      <div class="head">
+        <span>NODE_SYNC.log</span>
+        <span class="blink">●</span>
+      </div>
+      <div class="line"><span>uplink</span><span class="ok">stable</span></div>
+      <div class="line"><span>signal</span><span>−0.4 dB</span></div>
+      <div class="line"><span>jitter</span><span>██ ms</span></div>
+      <div class="line"><span>session</span><span>7F2A-██</span></div>
+      <div class="line"><span>last_echo</span><span>22:13:██</span></div>
+      <div class="line"><span>integrity</span><span class="ok">PASS</span></div>
+    </div>
+
+  </aside>
+
+</div>
+
+<!-- 푸터 위 시스템 콘솔 -->
+<div class="system-console">
+  <div class="console-inner">
+    <div class="console-head">
+      <span>// APMB.console — node : SEOUL-04 — tail -f /var/log/apmb.log</span>
+      <span><span class="blink">█</span></span>
+    </div>
+    <div class="console-line"><span class="ts">[22:13:██]</span><span class="arrow">»</span><span class="ok">[OK]</span> document.0341 sync complete</div>
+    <div class="console-line"><span class="ts">[22:13:██]</span><span class="arrow">»</span><span class="ok">[OK]</span> render.complete — 4 widgets · 2 records</div>
+    <div class="console-line"><span class="ts">[22:13:██]</span><span class="arrow">»</span><span class="warn">[WARN]</span> echo signature ████████ detected on sub-channel</div>
+    <div class="console-line"><span class="ts">[22:13:██]</span><span class="arrow">»</span><span class="ok">[OK]</span> session 7F2A-██-31 alive · uptime 41:12:██</div>
+  </div>
+</div>
+
+<!-- 88x31 웹배너 줄 (Webcore 클래식) -->
+<div class="web-rings">
+  <div class="wr-inner">
+    <div class="wr-title">// 관련 부서 · 협력 기관 · 외부 노드 //</div>
+    <div class="wr-banners">
+      <div class="web-ring-banner b1">APMB<br>SEOUL-04</div>
+      <div class="web-ring-banner b2">RAKṢA<br>DIVISION</div>
+      <div class="web-ring-banner b3">AJÑĀTA<br>ARCHIVES</div>
+      <div class="web-ring-banner b4">QA-C<br>AUTHORITY</div>
+      <div class="web-ring-banner b5">██████<br>SECTOR ██</div>
+      <div class="web-ring-banner b6">.echo<br>OBSERVED</div>
+      <div class="web-ring-banner b7">SP-DIV<br>CONT.UNIT</div>
+      <div class="web-ring-banner b8">민원<br>관리과</div>
+      <div class="web-ring-banner b9">현장<br>대응부</div>
+      <div class="web-ring-banner b10">|||||<br>RESTRICTED</div>
+      <div class="web-ring-banner b11">감정<br>변칙반</div>
+      <div class="web-ring-banner b12">node.SE-04<br>UPLINK</div>
+    </div>
+  </div>
+</div>
+
+<!-- Win98 작업 표시줄 -->
+<div class="win98-taskbar">
+  <button class="start-btn">
+    <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="2" width="6" height="5" fill="#a8443e"/>
+      <rect x="8" y="2" width="6" height="5" fill="#5e8a4e"/>
+      <rect x="1" y="8" width="6" height="5" fill="#f0c090"/>
+      <rect x="8" y="8" width="6" height="5" fill="#4a6b9c"/>
+    </svg>
+    Start
+  </button>
+  <div class="task-divider"></div>
+  <div class="task-items">
+    <div class="task-item active">
+      <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="1" width="8" height="13" fill="#fafafc" stroke="#3a3a44"/>
+        <polygon points="11,1 14,4 11,4" fill="#c0bcc8" stroke="#3a3a44"/>
+        <line x1="4" y1="5" x2="10" y2="5" stroke="#3a3a44"/>
+        <line x1="4" y1="7" x2="10" y2="7" stroke="#3a3a44"/>
+        <line x1="4" y1="9" x2="10" y2="9" stroke="#3a3a44"/>
+        <line x1="4" y1="11" x2="8" y2="11" stroke="#3a3a44"/>
+      </svg>
+      <span class="label">APMB-DOC-0341 — 노스포비아</span>
+    </div>
+    <div class="task-item">
+      <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+        <path d="M1,4 L1,13 L15,13 L15,5 L7,5 L6,4 Z" fill="#f0c090" stroke="#3a3a44"/>
+        <line x1="1" y1="6" x2="15" y2="6" stroke="#3a3a44" stroke-opacity="0.3"/>
+      </svg>
+      <span class="label">사상체 DB</span>
+    </div>
+    <div class="task-item">
+      <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="3" width="12" height="9" fill="#c0bcc8" stroke="#3a3a44"/>
+        <rect x="3" y="4" width="10" height="7" fill="#3a3a44"/>
+        <rect x="4" y="5" width="2" height="1" fill="#6dbf6d"/>
+        <rect x="4" y="7" width="6" height="1" fill="#b0b0b8"/>
+        <rect x="4" y="9" width="4" height="1" fill="#b0b0b8"/>
+        <rect x="5" y="13" width="6" height="1" fill="#c0bcc8" stroke="#3a3a44"/>
+      </svg>
+      <span class="label">콘솔</span>
+    </div>
+  </div>
+  <div class="tray">
+    <span class="tray-icon" title="격리 안정">
+      <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5,7 L5,5 Q5,2 8,2 Q11,2 11,5 L11,7" fill="none" stroke="#3a3a44" stroke-width="1.5"/>
+        <rect x="3" y="7" width="10" height="7" fill="#f0c090" stroke="#3a3a44"/>
+        <rect x="7" y="9" width="2" height="3" fill="#3a3a44"/>
+      </svg>
+    </span>
+    <span class="tray-icon" title="수신 중">
+      <svg class="pixel-icon sm" viewBox="0 0 16 16" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="5" width="2" height="6" fill="#6dbf6d"/>
+        <rect x="5" y="3" width="2" height="8" fill="#6dbf6d"/>
+        <rect x="8" y="2" width="2" height="9" fill="#6dbf6d"/>
+        <rect x="11" y="6" width="2" height="5" fill="#3a3a44" fill-opacity="0.3"/>
+      </svg>
+    </span>
+    <span class="clock">22:13</span>
+  </div>
+</div>
+
+<!-- 푸터 -->
+<footer class="page-footer">
+  <div class="inner">
+    <div>© APMB · 초상현상관리국 — 내부 문서 시스템</div>
+    <div class="glitch-line">// we_are_still_here.log // last_sync 22:13:██ //</div>
+    <div>
+      <a href="#">문서 표준</a> · <a href="#">검열 정책</a> · <a href="#">접속 약관</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
